@@ -1,0 +1,2149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KinForge Kindroid Generator</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="studio-sidebar" aria-label="KinForge navigation">
+        <div class="studio-brand">
+          <div class="brand-mark">KF</div>
+          <div>
+            <strong>KinForge</strong>
+            <span>Character Studio</span>
+          </div>
+        </div>
+
+        <nav class="studio-nav">
+          <p class="nav-kicker">Create</p>
+          <button class="studio-nav-item active" type="button" data-studio-label="start" data-studio-target="control:kin">
+            <span>Start</span>
+            <small>Core setup</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="personality" data-studio-target="control:personality">
+            <span>Personality</span>
+            <small>How they think</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="dynamics" data-studio-target="control:dynamics">
+            <span>Dynamics</span>
+            <small>Story and bonds</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="world" data-studio-target="control:world">
+            <span>World</span>
+            <small>Setting logic</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="appearance" data-studio-target="control:appearance">
+            <span>Appearance</span>
+            <small>Visual anchors</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="player" data-studio-target="control:player">
+            <span>Player</span>
+            <small>User profile</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="interview" data-studio-target="control:interview">
+            <span>AI Interview</span>
+            <small>Organic questions</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="names" data-studio-target="control:names">
+            <span>Name Forge</span>
+            <small>Generate names</small>
+          </button>
+
+          <p class="nav-kicker">Review</p>
+          <button class="studio-nav-item" type="button" data-studio-label="profile" data-studio-target="output:main">
+            <span>Generated Profile</span>
+            <small>Kindroid text</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="scenes" data-studio-target="output:scenes">
+            <span>Greeting / Scenes</span>
+            <small>Openings and variants</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="journals" data-studio-target="output:journals">
+            <span>Journals</span>
+            <small>Memory triggers</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="images" data-studio-target="output:gallery">
+            <span>Images</span>
+            <small>Prompts and studio</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="consistency" data-trigger-action="consistency">
+            <span>Consistency</span>
+            <small>Review conflicts</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="characterSheet" data-trigger-action="character-sheet">
+            <span>Character Sheet</span>
+            <small>Preview package</small>
+          </button>
+
+          <p class="nav-kicker">Export / Publish</p>
+          <button class="studio-nav-item" type="button" data-studio-label="loadPackage" data-trigger-action="load">
+            <span>Load Package</span>
+            <small>Restore saved work</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="importExport" data-trigger-action="import">
+            <span>Import Kin Text</span>
+            <small>Infer from text</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="savePackage" data-trigger-action="save-package">
+            <span>Save Package</span>
+            <small>Everything local</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="exportKin" data-trigger-action="export-kin">
+            <span>Export .kin</span>
+            <small>Share with images</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="saveSettings" data-trigger-action="save-settings">
+            <span>Save Settings</span>
+            <small>Inputs only</small>
+          </button>
+
+          <p class="nav-kicker">Settings</p>
+          <button class="studio-nav-item" type="button" data-studio-label="ai" data-studio-target="control:ai">
+            <span>AI Models</span>
+            <small>Routing and budget</small>
+          </button>
+          <button class="studio-nav-item" type="button" data-studio-label="kindroidApi" data-studio-target="control:ai">
+            <span>Kindroid API</span>
+            <small>Publish and sync</small>
+          </button>
+        </nav>
+
+        <div class="studio-sidebar-foot">
+          <span>Local workspace</span>
+          <strong>Private by default</strong>
+        </div>
+      </aside>
+
+      <div class="studio-main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow title-kicker">Kindroid profile forge <span class="version-badge">v0.78.0</span></p>
+          <h1>KinForge Kindroid Generator</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="workspace-mode-switch" role="tablist" aria-label="KinForge workspace">
+            <button class="active" id="workspaceCreateButton" type="button" data-workspace-mode="create">Create</button>
+            <button id="workspaceReviewButton" type="button" data-workspace-mode="review">Review</button>
+            <button id="workspaceSettingsButton" type="button" data-workspace-mode="settings">Settings</button>
+          </div>
+          <span class="status-pill" id="statusPill">Offline ready</span>
+          <button class="ghost-button" id="clearButton" type="button">Clear</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="control-panel" aria-label="Generator controls">
+          <div class="mode-switch" role="tablist" aria-label="Generator mode">
+            <button class="active" type="button" data-mode="interview">Interview</button>
+            <button type="button" data-mode="auto">Auto Generate</button>
+          </div>
+
+          <div class="workspace-tabs control-tabs" id="controlTabs" role="tablist" aria-label="Generator sections"></div>
+
+          <form id="generatorForm" class="generator-form">
+            <div class="field-grid">
+              <label>
+                User name
+                <input id="userName" maxlength="32" placeholder="{username}" />
+              </label>
+              <label>
+                Kindroid name
+                <input id="kindroidName" maxlength="48" placeholder="Infer or enter a name" />
+              </label>
+            </div>
+
+            <label>
+              Creation type
+              <select id="creationType">
+                <option>Single Character</option>
+                <option>World / NPC Ensemble</option>
+                <option>Multi-Character Kin</option>
+              </select>
+            </label>
+
+            <section class="mode-guidance" id="modeGuidanceBox" aria-live="polite"></section>
+
+            <label>
+              Ensemble members
+              <textarea id="ensembleMembers" rows="3" maxlength="900" placeholder="For multi-character Kins: up to three people. Name | role | voice | relationship | visual anchor..."></textarea>
+            </label>
+
+            <label>
+              World / narrator instructions
+              <textarea id="worldNarrationNotes" rows="3" maxlength="700" placeholder="For world Kins: narrator role, NPC handling, player role, journal instructions, scene rules..."></textarea>
+            </label>
+
+            <div class="field-grid">
+              <label>
+                Kindroid gender
+                <input id="gender" maxlength="48" placeholder="Woman, man, nonbinary..." />
+              </label>
+              <label>
+                Species
+                <input id="species" maxlength="80" placeholder="Human, cat girl, goliath, vampire, android..." />
+              </label>
+              <label>
+                Kindroid age
+                <input id="age" inputmode="numeric" placeholder="25+" />
+              </label>
+              <label>
+                Apparent age
+                <input id="apparentAge" inputmode="numeric" maxlength="32" placeholder="Optional: appears 29, early 30s..." />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                Current city
+                <input id="currentCity" maxlength="80" placeholder="Infer, Calder City, Seattle, Paris..." />
+              </label>
+              <label>
+                State / region
+                <input id="currentState" maxlength="80" placeholder="Washington, Île-de-France, Kansai..." />
+              </label>
+              <label>
+                Country
+                <input id="currentCountry" maxlength="80" placeholder="United States, France, Japan..." />
+              </label>
+            </div>
+
+            <section class="interview-box name-wizard-box" id="nameWizardBox" aria-label="Intelligent name generator">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">Name forge</p>
+                  <h2>Names that sound like people</h2>
+                </div>
+                <button class="ghost-button" id="generateNamesButton" type="button">Generate Names</button>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Current year
+                  <input id="nameCurrentYear" inputmode="numeric" maxlength="4" placeholder="2026" />
+                </label>
+                <label>
+                  Estimated birth year
+                  <input id="nameEstimatedBirthYear" readonly placeholder="Calculated from age" />
+                </label>
+                <label>
+                  Birth country
+                  <input id="nameBirthCountry" maxlength="80" placeholder="United States, Japan, Brazil..." />
+                </label>
+              </div>
+
+              <label>
+                Heritage
+                <input id="nameHeritage" maxlength="180" placeholder="Mother Romanian, father Irish; or 50% German, 25% Italian..." />
+              </label>
+
+              <div class="field-grid">
+                <label>
+                  Region
+                  <input id="nameRegion" maxlength="100" placeholder="Pacific Northwest, Quebec, Northern England..." />
+                </label>
+                <label>
+                  Family style
+                  <select id="nameFamilyStyle">
+                    <option value="">Infer</option>
+                    <option>Traditional</option>
+                    <option>Modern</option>
+                    <option>Religious</option>
+                    <option>Nature Inspired</option>
+                    <option>Literary</option>
+                    <option>Vintage</option>
+                    <option>Short Names</option>
+                    <option>Elegant</option>
+                    <option>Working Class</option>
+                    <option>Upper Class</option>
+                    <option>Creative</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Name feel
+                  <select id="nameFeel">
+                    <option value="">Infer</option>
+                    <option>Friendly</option>
+                    <option>Strong</option>
+                    <option>Elegant</option>
+                    <option>Quiet</option>
+                    <option>Adventurous</option>
+                    <option>Academic</option>
+                    <option>Soft</option>
+                    <option>Rugged</option>
+                    <option>Classic</option>
+                    <option>Modern</option>
+                    <option>Mysterious</option>
+                  </select>
+                </label>
+                <label>
+                  Name genre
+                  <select id="nameGenre">
+                    <option value="">Infer</option>
+                    <option>Real world</option>
+                    <option>Modern</option>
+                    <option>Historical</option>
+                    <option>Fantasy</option>
+                    <option>High fantasy</option>
+                    <option>Urban fantasy</option>
+                    <option>Sci-fi</option>
+                    <option>Cyberpunk</option>
+                    <option>Post-apocalyptic</option>
+                    <option>Horror</option>
+                    <option>Anime</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Occupation bias
+                  <input id="nameOccupationBias" maxlength="100" placeholder="Optional: mechanic, professor, librarian..." />
+                </label>
+              </div>
+
+              <label>
+                Name length
+                <input id="nameLength" type="range" min="1" max="5" value="3" />
+              </label>
+              <label>
+                Rarity
+                <input id="nameRarity" type="range" min="1" max="5" value="3" />
+              </label>
+              <label>
+                AI commonness filter
+                <input id="nameCommonnessFilter" type="range" min="1" max="5" value="3" />
+              </label>
+
+              <div class="name-results" id="nameResults" aria-live="polite"></div>
+              <div class="name-favorites-panel">
+                <div class="field-label-row">
+                  <span>Favorite names</span>
+                  <button class="ghost-button" id="clearNameFavoritesButton" type="button">Clear Favorites</button>
+                </div>
+                <div class="name-favorites" id="nameFavorites"></div>
+              </div>
+            </section>
+
+            <section class="interview-box player-box" aria-label="Player profile inputs">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">Player profile</p>
+                  <h2>Compatible user character</h2>
+                </div>
+              </div>
+              <label class="check-row">
+                <input id="createPlayerProfile" type="checkbox" checked />
+                <span>Create compatible player profile</span>
+              </label>
+              <div class="field-grid">
+                <label>
+                  Player name
+                  <input id="playerName" maxlength="48" placeholder="Defaults to user name" />
+                </label>
+                <label>
+                  Player age
+                  <input id="playerAge" inputmode="numeric" placeholder="25+" />
+                </label>
+              </div>
+              <div class="field-grid">
+                <label>
+                  Player gender
+                  <input id="playerGender" maxlength="48" placeholder="Man, woman, nonbinary..." />
+                </label>
+                <label>
+                  Player ethnicity
+                  <input id="playerEthnicity" maxlength="80" placeholder="Optional visual/cultural anchor" />
+                </label>
+              </div>
+              <label>
+                Player notes
+                <textarea id="playerNotes" rows="2" maxlength="220" placeholder="Optional: role, temperament, boundaries, relationship angle, or contrast with the Kin."></textarea>
+              </label>
+            </section>
+
+            <label>
+              <span class="field-label-row">
+                <span>Core idea</span>
+                <span class="section-count" id="coreIdeaCount">0 / 1000</span>
+              </span>
+              <textarea id="coreIdea" rows="3" maxlength="1000" placeholder="A burned-out Parisian chef rebuilding her confidence after a public failure."></textarea>
+            </label>
+
+            <label>
+              Primary occupation
+              <input id="occupation" maxlength="140" placeholder="Babysitter, mechanic, private investigator, college student..." />
+            </label>
+
+            <label>
+              Secondary / secret work
+              <input id="secondaryOccupation" maxlength="180" placeholder="Optional side job, hidden income, volunteer work, illegal work, family obligation..." />
+            </label>
+
+            <label>
+              Education / schooling
+              <input id="education" maxlength="180" placeholder="Optional: college student, trade school, nursing program, dropped out, self-taught..." />
+            </label>
+
+            <label>
+              Genre, setting, or vibe
+              <input id="genre" maxlength="120" placeholder="Slow-burn romance, neon city, cozy occult shop, shonen energy..." />
+            </label>
+
+            <label>
+              Tone pack
+              <select id="tonePack">
+                <option value="">Infer</option>
+                <option>Cinematic</option>
+                <option>Noir</option>
+                <option>Cozy</option>
+                <option>Gothic</option>
+                <option>Romance novel</option>
+                <option>Anime/shonen</option>
+                <option>Slice of life</option>
+                <option>Psychological drama</option>
+                <option>Urban fantasy</option>
+                <option>Dry comedy</option>
+                <option>High tension thriller</option>
+              </select>
+            </label>
+
+            <label>
+              Story intensity
+              <select id="storyIntensity">
+                <option value="">Infer</option>
+                <option>Mild</option>
+                <option>Moderate</option>
+                <option>High</option>
+              </select>
+            </label>
+
+            <section class="interview-box" id="worldBox" aria-label="Worldbuilding inputs">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">World module</p>
+                  <h2>Setting facts for journals</h2>
+                </div>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  World type
+                  <select id="worldType">
+                    <option value="">Infer</option>
+                    <option>Real world</option>
+                    <option>Historical real world</option>
+                    <option>Alternate history</option>
+                    <option>Low fantasy</option>
+                    <option>High fantasy</option>
+                    <option>Urban fantasy</option>
+                    <option>Science fiction</option>
+                    <option>Post-apocalyptic</option>
+                    <option>Horror</option>
+                    <option>Custom</option>
+                  </select>
+                </label>
+                <label>
+                  Time period / era
+                  <input id="worldEra" maxlength="120" placeholder="Modern day, 1890s, near future, Second Age..." />
+                </label>
+              </div>
+
+              <label>
+                World rules
+                <textarea id="worldRules" rows="2" maxlength="420" placeholder="Magic is illegal, vampires need invitations, AI citizens have licenses, travel is dangerous after dusk..."></textarea>
+              </label>
+
+              <div class="field-grid">
+                <label>
+                  Creatures / species
+                  <textarea id="worldCreatures" rows="2" maxlength="320" placeholder="Fae, vampires, androids, mutants, old gods, ordinary humans only..."></textarea>
+                </label>
+                <label>
+                  Factions / groups
+                  <textarea id="worldFactions" rows="2" maxlength="320" placeholder="Guilds, agencies, covens, noble houses, gangs, neighborhood councils..."></textarea>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  People of note
+                  <textarea id="worldPeople" rows="2" maxlength="360" placeholder="Names, roles, patrons, rivals, family powers, local officials, dangerous regulars..."></textarea>
+                </label>
+                <label>
+                  Places of note
+                  <textarea id="worldPlaces" rows="2" maxlength="360" placeholder="Tavern, port, tower, diner, clinic, market, district, ruins, apartment building..."></textarea>
+                </label>
+              </div>
+
+              <label>
+                World conflicts
+                <textarea id="worldConflicts" rows="2" maxlength="420" placeholder="Local laws, shortages, rival factions, seasonal dangers, class tension, hidden border, supernatural pressure..."></textarea>
+              </label>
+
+              <label>
+                World notes
+                <textarea id="worldNotes" rows="3" maxlength="600" placeholder="Extra setting continuity that should mainly become journals, not overwrite the Kin."></textarea>
+              </label>
+            </section>
+
+            <label>
+              Personality notes
+              <textarea id="personality" rows="3" maxlength="360" placeholder="Optional nuance the sliders and labels do not capture: fear behind a habit, social contradictions, specific flaws, humor, pressure points..."></textarea>
+            </label>
+
+            <section class="interview-box" id="personalityBox" aria-label="Layered personality inputs">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">Layered personality</p>
+                  <h2>Behavior, Motivation, Bonds</h2>
+                </div>
+                <button class="help-button" type="button" data-help-system="personalityOverview" aria-label="Personality help">?</button>
+              </div>
+
+              <label data-personality-field="bigFiveOpenness">
+                <span class="field-label-row">
+                  <span>Openness</span>
+                  <button class="help-button" type="button" data-help-system="bigFive" data-help-key="openness" aria-label="Openness help">?</button>
+                </span>
+                <input id="bigFiveOpenness" type="range" min="1" max="5" value="3" />
+              </label>
+              <label data-personality-field="bigFiveConscientiousness">
+                <span class="field-label-row">
+                  <span>Conscientiousness</span>
+                  <button class="help-button" type="button" data-help-system="bigFive" data-help-key="conscientiousness" aria-label="Conscientiousness help">?</button>
+                </span>
+                <input id="bigFiveConscientiousness" type="range" min="1" max="5" value="3" />
+              </label>
+              <label data-personality-field="bigFiveExtraversion">
+                <span class="field-label-row">
+                  <span>Extraversion</span>
+                  <button class="help-button" type="button" data-help-system="bigFive" data-help-key="extraversion" aria-label="Extraversion help">?</button>
+                </span>
+                <input id="bigFiveExtraversion" type="range" min="1" max="5" value="3" />
+              </label>
+              <label data-personality-field="bigFiveAgreeableness">
+                <span class="field-label-row">
+                  <span>Agreeableness</span>
+                  <button class="help-button" type="button" data-help-system="bigFive" data-help-key="agreeableness" aria-label="Agreeableness help">?</button>
+                </span>
+                <input id="bigFiveAgreeableness" type="range" min="1" max="5" value="3" />
+              </label>
+              <label data-personality-field="bigFiveEmotionalStability">
+                <span class="field-label-row">
+                  <span>Emotional stability</span>
+                  <button class="help-button" type="button" data-help-system="bigFive" data-help-key="emotionalStability" aria-label="Emotional stability help">?</button>
+                </span>
+                <input id="bigFiveEmotionalStability" type="range" min="1" max="5" value="3" />
+              </label>
+
+              <div class="field-grid">
+                <label>
+                  <span class="field-label-row">
+                    <span>Enneagram type</span>
+                    <button class="help-button" type="button" data-help-system="enneagram" data-help-field="enneagramType" aria-label="Enneagram help">?</button>
+                  </span>
+                  <select id="enneagramType">
+                    <option value="">Infer</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="field-label-row">
+                    <span>Wing</span>
+                    <button class="help-button" type="button" data-help-system="enneagramWing" aria-label="Enneagram wing help">?</button>
+                  </span>
+                  <select id="enneagramWing">
+                    <option value="">Infer</option>
+                    <option>w1</option>
+                    <option>w2</option>
+                    <option>w3</option>
+                    <option>w4</option>
+                    <option>w5</option>
+                    <option>w6</option>
+                    <option>w7</option>
+                    <option>w8</option>
+                    <option>w9</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  <span class="field-label-row">
+                    <span>Attachment style</span>
+                    <button class="help-button" type="button" data-help-system="attachment" data-help-field="attachmentStyle" aria-label="Attachment style help">?</button>
+                  </span>
+                  <select id="attachmentStyle">
+                    <option value="">Infer</option>
+                    <option>Secure</option>
+                    <option>Anxious</option>
+                    <option>Avoidant</option>
+                    <option>Fearful-Avoidant</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="field-label-row">
+                    <span>Trauma response</span>
+                    <button class="help-button" type="button" data-help-system="traumaResponse" aria-label="Trauma response help">?</button>
+                  </span>
+                  <select id="traumaResponse">
+                    <option value="">Infer</option>
+                    <option>Fight</option>
+                    <option>Flight</option>
+                    <option>Freeze</option>
+                    <option>Fawn</option>
+                    <option>Mask / Perform</option>
+                    <option>Control / Overfunction</option>
+                    <option>Shutdown / Withdraw</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  <span class="field-label-row">
+                    <span>Moral alignment</span>
+                    <button class="help-button" type="button" data-help-system="alignment" data-help-field="moralAlignment" aria-label="Moral alignment help">?</button>
+                  </span>
+                  <select id="moralAlignment">
+                    <option value="">Infer</option>
+                    <option>Lawful Good</option>
+                    <option>Neutral Good</option>
+                    <option>Chaotic Good</option>
+                    <option>Lawful Neutral</option>
+                    <option>True Neutral</option>
+                    <option>Chaotic Neutral</option>
+                    <option>Lawful Evil</option>
+                    <option>Neutral Evil</option>
+                    <option>Chaotic Evil</option>
+                  </select>
+                </label>
+              </div>
+
+              <section class="personality-preview" aria-live="polite">
+                <p class="eyebrow">Personality preview</p>
+                <p id="personalityPreviewText">Set a few personality values to see the combined character read.</p>
+                <div id="personalitySuggestions" class="suggestion-list"></div>
+              </section>
+            </section>
+
+            <label>
+              Dynamic with user
+              <input id="dynamic" maxlength="160" placeholder="Rival, mentor, old friend, client, partner in trouble..." />
+            </label>
+
+            <label>
+              Relationship preset
+              <select id="relationshipPreset">
+                <option value="">Infer</option>
+                <option>Strangers</option>
+                <option>Old friends</option>
+                <option>Exes</option>
+                <option>Rivals</option>
+                <option>Client/professional</option>
+                <option>Co-conspirators</option>
+                <option>Protector/protected</option>
+                <option>Mentor/student, adults only</option>
+                <option>Boss/employee</option>
+                <option>Neighbors</option>
+                <option>Roommates</option>
+                <option>Stranger with leverage</option>
+                <option>Witness and suspect</option>
+                <option>Handler and asset</option>
+                <option>Old flame</option>
+              </select>
+            </label>
+
+            <label>
+              Romance and intimacy notes
+              <input id="intimacy" maxlength="180" placeholder="Optional. Tone, boundaries, slow burn, kinks, tenderness, tension..." />
+            </label>
+
+            <div class="field-grid">
+              <label>
+                Intimacy orientation
+                <select id="intimacyOrientation">
+                  <option value="">Infer</option>
+                  <option>Straight</option>
+                  <option>Gay</option>
+                  <option>Lesbian</option>
+                  <option>Bisexual</option>
+                  <option>Pansexual</option>
+                  <option>Asexual</option>
+                  <option>Demisexual</option>
+                  <option>Queer</option>
+                  <option>Flexible</option>
+                  <option>Questioning</option>
+                </select>
+              </label>
+              <label>
+                Partner style
+                <input id="partnerStyle" maxlength="160" placeholder="Optional: protective, teasing, service-oriented, affectionate, blunt..." />
+              </label>
+            </div>
+
+            <label class="slider-label">
+              <span class="field-label-row">
+                <span>Intimacy power leaning</span>
+                <span class="section-count" id="powerLeaningLabel">Switch</span>
+              </span>
+              <input id="powerLeaning" type="range" min="1" max="5" value="3" />
+            </label>
+
+            <div class="field-grid">
+              <label>
+                Chemistry
+                <select id="chemistry">
+                  <option value="">Infer</option>
+                  <option>Slow burn</option>
+                  <option>Fast burn</option>
+                  <option>Volatile push-pull</option>
+                  <option>Established intimacy</option>
+                  <option>Physically direct, emotionally guarded</option>
+                  <option>Tender domestic</option>
+                  <option>Competitive charge</option>
+                </select>
+              </label>
+              <label>
+                Moral edge
+                <select id="moralEdge">
+                  <option value="">Balanced</option>
+                  <option>Grounded but flawed</option>
+                  <option>Messy</option>
+                  <option>Morally gray</option>
+                  <option>Self-destructive</option>
+                  <option>Manipulative when scared</option>
+                  <option>Possessive or jealous</option>
+                  <option>Villainous charm</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Drama heat
+              <select id="dramaHeat">
+                <option value="">Medium</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Volatile but coherent</option>
+              </select>
+            </label>
+
+            <label>
+              Boundary / Do Not Include
+              <textarea id="boundaries" rows="2" maxlength="280" placeholder="Optional exclusions, hard limits, themes to avoid, or traits you do not want included."></textarea>
+            </label>
+
+            <section class="interview-box" id="appearanceBox" aria-label="Kin appearance inputs">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">Optional module</p>
+                  <h2>Kin Appearance</h2>
+                </div>
+                <div class="appearance-head-actions">
+                  <button class="ghost-button" id="appearanceImageStudioButton" type="button" data-studio-target="output:gallery">Image Studio</button>
+                  <button class="ghost-button" id="randomAppearanceButton" type="button">Random</button>
+                </div>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Portrait consistency
+                  <select id="portraitConsistency">
+                    <option value="">Moderate</option>
+                    <option>Flexible</option>
+                    <option>Moderate</option>
+                    <option>Strict</option>
+                  </select>
+                </label>
+                <label>
+                  Facial distinctiveness
+                  <select id="facialDistinctiveness">
+                    <option value="">Average</option>
+                    <option>Average</option>
+                    <option>Distinctive</option>
+                    <option>Highly distinctive</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Ethnicity
+                  <input id="appearanceEthnicity" maxlength="80" placeholder="AI, Random, or locked value" />
+                </label>
+                <label>
+                  Skin tone
+                  <input id="skinTone" maxlength="80" placeholder="AI, Random, or locked value" />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Hair color
+                  <select id="hairColor">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Black</option>
+                    <option>Dark Brown</option>
+                    <option>Brown</option>
+                    <option>Light Brown</option>
+                    <option>Auburn</option>
+                    <option>Copper</option>
+                    <option>Ginger</option>
+                    <option>Strawberry Blonde</option>
+                    <option>Blonde</option>
+                    <option>Platinum</option>
+                    <option>Gray</option>
+                    <option>White</option>
+                    <option>Fantasy</option>
+                  </select>
+                </label>
+                <label>
+                  Custom hair color
+                  <input id="hairColorCustom" maxlength="80" placeholder="Optional locked color description" />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Hairstyle
+                  <input id="hairstyle" maxlength="80" placeholder="AI, Random, bun, side part..." />
+                </label>
+                <label>
+                  Hair length
+                  <select id="hairLength">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Very short</option>
+                    <option>Short</option>
+                    <option>Chin length</option>
+                    <option>Shoulder length</option>
+                    <option>Long</option>
+                    <option>Very long</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Hair texture
+                  <select id="hairTexture">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Straight</option>
+                    <option>Wavy</option>
+                    <option>Curly</option>
+                    <option>Coily</option>
+                    <option>Thick</option>
+                    <option>Fine</option>
+                  </select>
+                </label>
+                <label>
+                  Eye color
+                  <select id="eyeColor">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Brown</option>
+                    <option>Hazel</option>
+                    <option>Green</option>
+                    <option>Blue</option>
+                    <option>Gray</option>
+                    <option>Amber</option>
+                    <option>Black</option>
+                    <option>Fantasy</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Eye shape
+                  <select id="eyeShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Hooded</option>
+                    <option>Almond</option>
+                    <option>Round</option>
+                    <option>Deep-set</option>
+                    <option>Upturned</option>
+                    <option>Downturned</option>
+                  </select>
+                </label>
+                <label>
+                  Face shape
+                  <select id="faceShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Round</option>
+                    <option>Oval</option>
+                    <option>Square</option>
+                    <option>Heart-shaped</option>
+                    <option>Angular</option>
+                    <option>Long</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Nose
+                  <select id="noseShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Straight</option>
+                    <option>Slightly crooked</option>
+                    <option>Broad</option>
+                    <option>Narrow</option>
+                    <option>Rounded</option>
+                  </select>
+                </label>
+                <label>
+                  Lips
+                  <select id="lipShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Defined</option>
+                    <option>Full</option>
+                    <option>Thin</option>
+                    <option>Wide</option>
+                    <option>Uneven smile</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Brows
+                  <select id="browShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Straight</option>
+                    <option>Arched</option>
+                    <option>Thick</option>
+                    <option>Fine</option>
+                    <option>Uneven</option>
+                  </select>
+                </label>
+                <label>
+                  Jawline
+                  <select id="jawline">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Soft</option>
+                    <option>Defined</option>
+                    <option>Square</option>
+                    <option>Strong chin</option>
+                    <option>Narrow</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                Distinctive features
+                <input id="distinctiveFeatures" maxlength="180" placeholder="Freckles, scar, glasses, birthmark, dimples, gap teeth, vitiligo, piercings, tattoos..." />
+              </label>
+
+              <div class="field-grid">
+                <label>
+                  Height
+                  <select id="heightScale">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Very Short</option>
+                    <option>Short</option>
+                    <option>Average</option>
+                    <option>Tall</option>
+                    <option>Very Tall</option>
+                  </select>
+                </label>
+                <label>
+                  Body shape
+                  <select id="bodyShape">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Rectangle</option>
+                    <option>Pear</option>
+                    <option>Apple</option>
+                    <option>Hourglass</option>
+                    <option>Inverted Triangle</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Body build
+                  <select id="bodyBuild">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Petite</option>
+                    <option>Thin</option>
+                    <option>Medium</option>
+                    <option>Soft</option>
+                    <option>Broad</option>
+                    <option>Heavyset</option>
+                  </select>
+                </label>
+                <label>
+                  Muscle tone
+                  <select id="muscleTone">
+                    <option value="">AI</option>
+                    <option>Random</option>
+                    <option>Soft</option>
+                    <option>Lightly toned</option>
+                    <option>Sturdy</option>
+                    <option>Athletic</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Clothing
+                  <input id="appearanceClothing" maxlength="90" placeholder="AI, Random, or locked styling" />
+                </label>
+                <label>
+                  Expression
+                  <input id="appearanceExpression" maxlength="90" placeholder="AI, Random, tired smile..." />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Pose / camera
+                  <input id="appearancePose" maxlength="90" placeholder="AI, Random, close portrait, three-quarter..." />
+                </label>
+                <label>
+                  Lighting / background
+                  <input id="appearanceLighting" maxlength="120" placeholder="AI, Random, soft window light, plain wall..." />
+                </label>
+              </div>
+
+              <label>
+                Appearance notes
+                <textarea id="appearanceNotes" rows="2" maxlength="240" placeholder="Any extra locked visual rules or things to avoid."></textarea>
+              </label>
+
+            </section>
+
+            <details class="interview-box" id="advancedPersonalityBox">
+              <summary>Advanced Personality</summary>
+              <div class="field-grid">
+                <label>
+                  <span class="field-label-row">
+                    <span>MBTI</span>
+                    <button class="help-button" type="button" data-help-system="mbti" data-help-field="mbti" aria-label="MBTI help">?</button>
+                  </span>
+                  <select id="mbti">
+                    <option value="">Infer</option>
+                    <option>INTJ</option>
+                    <option>INTP</option>
+                    <option>ENTJ</option>
+                    <option>ENTP</option>
+                    <option>INFJ</option>
+                    <option>INFP</option>
+                    <option>ENFJ</option>
+                    <option>ENFP</option>
+                    <option>ISTJ</option>
+                    <option>ISFJ</option>
+                    <option>ESTJ</option>
+                    <option>ESFJ</option>
+                    <option>ISTP</option>
+                    <option>ISFP</option>
+                    <option>ESTP</option>
+                    <option>ESFP</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="field-label-row">
+                    <span>Tritype</span>
+                    <button class="help-button" type="button" data-help-system="tritype" aria-label="Tritype help">?</button>
+                  </span>
+                  <input id="tritype" maxlength="8" inputmode="numeric" placeholder="Infer, 358, 459, 146..." />
+                </label>
+              </div>
+            </details>
+
+            <section class="interview-box" id="interviewBox" aria-label="Interview questions">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">Interview mode</p>
+                  <h2 id="questionTitle">Question 1 of 6</h2>
+                </div>
+                <div class="interview-actions">
+                  <button class="ghost-button" id="buildInterviewButton" type="button">Build AI Interview</button>
+                  <button class="ghost-button" id="resetInterviewButton" type="button">Reset</button>
+                  <button class="ghost-button" id="skipQuestionButton" type="button">Skip</button>
+                </div>
+              </div>
+              <p class="section-note" id="interviewStatus">Enter a Core Idea, then build a tailored AI interview. The static interview remains available as a fallback.</p>
+              <p id="questionText"></p>
+              <textarea id="questionAnswer" rows="3" placeholder="Answer in fragments if you want. KinForge can work with sparks."></textarea>
+              <button class="primary-button" id="nextQuestionButton" type="button">Save answer</button>
+            </section>
+
+            <section class="interview-box ai-control-box" id="aiControlBox" aria-label="AI model routing">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow">AI Control</p>
+                  <h2>Task model routing</h2>
+                </div>
+              </div>
+              <p class="section-note">Choose which model handles each KinForge task. Custom values are sent directly to the API.</p>
+              <label class="budget-mode-toggle">
+                <input id="budgetModeToggle" type="checkbox" />
+                <span>
+                  <strong>Budget Mode</strong>
+                  <small>Use gpt-4.1-mini for lighter tasks while leaving full generation, scenes, greeting, image generation, and consistency at your selected quality.</small>
+                </span>
+              </label>
+              <p class="section-note" id="aiBudgetStatus">Budget Mode is off.</p>
+              <div class="ai-model-legend">
+                <span>Budget: gpt-4.1-mini</span>
+                <span>Fast: gpt-5.6-luna</span>
+                <span>Balanced: gpt-5.6-terra</span>
+                <span>Best: gpt-5.6</span>
+              </div>
+              <div class="ai-model-rows" id="aiModelRows"></div>
+              <section class="kindroid-api-box" aria-label="Kindroid API integration">
+                <div class="question-head">
+                  <div>
+                    <p class="eyebrow">Kindroid API</p>
+                    <h2>Saved targets and push preview</h2>
+                  </div>
+                  <button class="ghost-button" id="testKindroidApiButton" type="button">Test Key</button>
+                </div>
+                <p class="section-note">Save existing Kindroid targets, preview the payload, then intentionally overwrite selected fields through the Kindroid API.</p>
+                <label>
+                  API key
+                  <input id="kindroidApiKey" type="password" autocomplete="off" placeholder="kn_... session only unless saved below" />
+                </label>
+                <div class="kindroid-secret-actions">
+                  <label class="budget-mode-toggle">
+                    <input id="rememberKindroidApiKey" type="checkbox" />
+                    <span>
+                      <strong>Remember API key on this PC</strong>
+                      <small>Stores an encrypted local blob. The key is still excluded from exports and package files.</small>
+                    </span>
+                  </label>
+                  <div class="kindroid-target-actions">
+                    <button class="ghost-button" id="saveKindroidApiKeyButton" type="button">Save Key Locally</button>
+                    <button class="ghost-button" id="forgetKindroidApiKeyButton" type="button">Forget Saved Key</button>
+                  </div>
+                  <p class="section-note" id="kindroidSecretStatus">API key is session-only.</p>
+                </div>
+                <div class="field-grid">
+                  <label>
+                    Target name
+                    <input id="kindroidTargetName" maxlength="80" placeholder="Maren, Sheryl, test slot..." />
+                  </label>
+                  <label>
+                    AI ID
+                    <input id="kindroidTargetAiId" maxlength="120" placeholder="Existing Kindroid ai_id" />
+                  </label>
+                </div>
+                <label>
+                  Target notes
+                  <input id="kindroidTargetNotes" maxlength="180" placeholder="Optional local note; never sent to Kindroid" />
+                </label>
+                <div class="kindroid-target-actions">
+                  <select id="kindroidTargetSelect" aria-label="Saved Kindroid targets"></select>
+                  <button class="ghost-button" id="saveKindroidTargetButton" type="button">Save Target</button>
+                  <button class="ghost-button" id="removeKindroidTargetButton" type="button">Remove Target</button>
+                </div>
+                <div class="kindroid-target-guide" id="kindroidTargetGuide" aria-live="polite"></div>
+                <section class="kindroid-import-panel">
+                  <div class="question-head">
+                    <div>
+                      <p class="eyebrow">Import Target</p>
+                      <h2>Load selected Kindroid locally</h2>
+                    </div>
+                  </div>
+                  <p class="section-note">Kindroid does not currently expose a profile read endpoint. KinForge can load its last successful push exactly, or infer a local draft from recent chat.</p>
+                  <div class="kindroid-target-actions">
+                    <button class="ghost-button" id="loadKindroidLastPushButton" type="button">Load Last Push Baseline</button>
+                    <button class="ghost-button" id="inferKindroidFromChatButton" type="button">Infer From Recent Chat</button>
+                  </div>
+                  <textarea id="kindroidImportPreview" readonly spellcheck="false" placeholder="Import status and reconstructed source text will appear here."></textarea>
+                  <p class="section-note" id="kindroidImportStatus">No target imported yet.</p>
+                </section>
+                <div class="kindroid-field-map" id="kindroidFieldMap" aria-label="Kindroid fields to preview">
+                  <label><input type="checkbox" data-kindroid-field="ai_name" checked /> Name</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_gender" checked /> Gender</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_backstory" checked /> Backstory</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_memory" checked /> Key Memories</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_directive" checked /> Response Directive</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_example_message" checked /> Example Message</label>
+                  <label><input type="checkbox" data-kindroid-field="current_scene" checked /> Current Scene</label>
+                  <label><input type="checkbox" data-kindroid-field="user_name" checked /> User Name</label>
+                  <label><input type="checkbox" data-kindroid-field="user_gender" /> User Gender</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_additional_context" /> Additional Context</label>
+                </div>
+                <div class="kindroid-target-actions">
+                  <button class="primary-button" id="buildKindroidPreviewButton" type="button">Build Push Preview</button>
+                  <button class="ghost-button" id="reviewKindroidPushButton" type="button">Review Safety</button>
+                  <button class="ghost-button" id="compareKindroidPushButton" type="button">Compare to Last Push</button>
+                  <button class="ghost-button" id="copyKindroidPreviewButton" type="button">Copy Preview</button>
+                  <button class="ghost-button" id="copyKindroidDiffButton" type="button">Copy Diff</button>
+                </div>
+                <textarea id="kindroidPushPreview" readonly spellcheck="false" placeholder="Push preview JSON will appear here."></textarea>
+                <div class="kindroid-safety-panel hidden" id="kindroidSafetyPanel" aria-live="polite"></div>
+                <div class="kindroid-diff-panel hidden" id="kindroidDiffPanel" aria-live="polite"></div>
+                <section class="kindroid-danger-zone">
+                  <strong>Overwrite Existing Kindroid</strong>
+                  <p>Type OVERWRITE to enable the live push. Only checked, non-empty fields in the preview are sent.</p>
+                  <div class="kindroid-target-actions">
+                    <input id="kindroidOverwriteConfirm" maxlength="20" placeholder="Type OVERWRITE" />
+                    <button class="primary-button" id="pushKindroidButton" type="button" disabled>Push to Kindroid</button>
+                  </div>
+                </section>
+                <section class="kindroid-danger-zone">
+                  <strong>Chat Break / Opening Greeting</strong>
+                  <p>Type CHAT BREAK to reset short-term chat memory and set the generated opening greeting as the first message.</p>
+                  <textarea id="kindroidChatBreakGreeting" readonly spellcheck="false" placeholder="Build a chat break preview from Opening Greeting."></textarea>
+                  <label class="budget-mode-toggle">
+                    <input id="kindroidWipeCascaded" type="checkbox" />
+                    <span>
+                      <strong>Also wipe cascaded memory</strong>
+                      <small>Usually leave this off. This may remove longer-term memory built from previous conversations.</small>
+                    </span>
+                  </label>
+                  <div class="kindroid-target-actions">
+                    <input id="kindroidChatBreakConfirm" maxlength="20" placeholder="Type CHAT BREAK" />
+                    <button class="ghost-button" id="buildKindroidChatBreakButton" type="button">Build Greeting Preview</button>
+                    <button class="primary-button" id="kindroidChatBreakButton" type="button" disabled>Chat Break</button>
+                    <button class="ghost-button" id="kindroidPushAndChatBreakButton" type="button" disabled>Push + Chat Break</button>
+                  </div>
+                </section>
+                <section class="kindroid-chat-history-panel">
+                  <div class="question-head">
+                    <div>
+                      <p class="eyebrow">Chat History</p>
+                      <h2>Pull recent Kindroid messages</h2>
+                    </div>
+                    <button class="ghost-button" id="fetchKindroidChatButton" type="button">Fetch Messages</button>
+                  </div>
+                  <p class="section-note">Fetch recent chat for review, continuity work, or future journal suggestions. Message text is shown locally and not written to logs.</p>
+                  <div class="field-grid">
+                    <label>
+                      Target type
+                      <select id="kindroidChatTargetType">
+                        <option value="ai">Selected Kindroid ai_id</option>
+                        <option value="group">Group chat group_id</option>
+                      </select>
+                    </label>
+                    <label>
+                      Group ID
+                      <input id="kindroidGroupId" maxlength="120" placeholder="Only needed for group chat" />
+                    </label>
+                    <label>
+                      Limit
+                      <input id="kindroidChatLimit" inputmode="numeric" maxlength="3" value="50" placeholder="1-100" />
+                    </label>
+                    <label>
+                      Start after timestamp
+                      <input id="kindroidChatCursor" maxlength="80" placeholder="Optional pagination cursor" />
+                    </label>
+                  </div>
+                  <div class="kindroid-target-actions">
+                    <button class="primary-button" id="analyzeKindroidChatButton" type="button">Analyze Chat</button>
+                    <button class="ghost-button" id="copyKindroidChatButton" type="button">Copy Chat Export</button>
+                    <button class="ghost-button" id="clearKindroidChatButton" type="button">Clear Chat View</button>
+                  </div>
+                  <textarea id="kindroidChatOutput" readonly spellcheck="false" placeholder="Fetched chat messages will appear here."></textarea>
+                  <div class="kindroid-chat-analysis hidden" id="kindroidChatAnalysis"></div>
+                  <p class="section-note" id="kindroidChatStatus">No chat history fetched yet.</p>
+                </section>
+                <div class="kindroid-push-history" id="kindroidPushHistory" aria-live="polite"></div>
+                <p class="section-note" id="kindroidApiStatus">Kindroid API key is stored locally and excluded from package exports/logs.</p>
+              </section>
+            </section>
+
+            <div class="actions">
+              <button class="primary-button" type="submit">Generate Kindroid</button>
+              <button class="ghost-button" id="randomSeedButton" type="button">Surprise me</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="output-panel" aria-label="Generated Kindroid">
+          <div class="output-header">
+            <div>
+              <h2 id="outputTitle">Ready when you are</h2>
+            </div>
+            <div class="output-actions">
+              <input class="hidden-file-input" id="loadFileInput" type="file" accept=".txt,.json,text/plain,application/json" />
+              <input class="hidden-file-input" id="kinImportFileInput" type="file" accept=".txt,text/plain" />
+              <button class="ghost-button" id="loadButton" type="button">Load</button>
+              <button class="ghost-button" id="openKinImportButton" type="button">Import Kin Text</button>
+              <button class="ghost-button" id="saveButton" type="button">Save</button>
+              <button class="ghost-button" id="saveSettingsButton" type="button">Save Settings</button>
+              <button class="ghost-button" id="savePackageButton" type="button">Save Package</button>
+              <button class="ghost-button" id="exportKinBundleButton" type="button">Export .kin</button>
+              <button class="ghost-button" id="openCharacterSheetButton" type="button">Character Sheet</button>
+              <button class="ghost-button" id="checkConsistencyButton" type="button">Check Consistency</button>
+              <button class="ghost-button" id="clearGeneratedButton" type="button">Clear Generated</button>
+              <button class="ghost-button" id="copyButton" type="button">Copy All</button>
+            </div>
+          </div>
+          <section class="generation-progress hidden" id="generationProgress" aria-live="polite">
+            <div class="progress-topline">
+              <span id="progressLabel">Ready</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <ol class="progress-log" id="progressLog"></ol>
+          </section>
+          <section class="api-error-panel hidden" id="apiErrorPanel" aria-live="polite">
+            <div class="api-error-head">
+              <strong>API error</strong>
+              <div class="api-error-actions">
+                <button class="ghost-button" id="copyApiErrorButton" type="button">Copy Error</button>
+                <button class="ghost-button" id="closeApiErrorButton" type="button">Close</button>
+              </div>
+            </div>
+            <pre id="apiErrorDetails"></pre>
+          </section>
+          <section class="consistency-panel hidden" id="consistencyPanel" aria-live="polite">
+            <div class="consistency-head">
+              <div>
+                <strong>Continuity Check</strong>
+                <span id="consistencySummary">No report yet.</span>
+              </div>
+              <div class="consistency-actions">
+                <button class="ghost-button" id="copyConsistencyButton" type="button">Copy Report</button>
+                <button class="ghost-button" id="closeConsistencyButton" type="button">Close</button>
+              </div>
+            </div>
+            <div class="consistency-list" id="consistencyList"></div>
+          </section>
+          <div class="workspace-tabs output-tabs" id="outputTabs" role="tablist" aria-label="Output sections"></div>
+          <div class="output-editor-shell">
+            <aside class="output-section-nav" aria-label="Output section navigator">
+              <div class="output-section-nav-head">
+                <strong>Sections</strong>
+                <span id="outputSectionNavSummary">0 filled</span>
+              </div>
+              <div class="output-section-nav-list" id="outputSectionNavList"></div>
+            </aside>
+            <div class="section-outputs" id="sectionOutputs">
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Tagline</h3>
+                  <span class="section-count" id="taglineCount">0 / 160</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="tagline">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="tagline">Copy</button>
+                </div>
+              </div>
+              <textarea id="taglineOutput" spellcheck="false" placeholder="A short hook for the Kin."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Keywords</h3>
+                  <span class="section-count" id="keywordsCount">0 / 220</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="keywords">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="keywords">Copy</button>
+                </div>
+              </div>
+              <textarea id="keywordsOutput" spellcheck="false" placeholder="Comma-separated tags for the Kin."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Story Premise</h3>
+                  <span class="section-count" id="storyPremiseCount">0 / 900</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="premise">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="premise">Copy</button>
+                </div>
+              </div>
+              <textarea id="storyPremiseOutput" spellcheck="false" placeholder="2-3 short paragraphs describing the story this Kin belongs in."></textarea>
+            </section>
+
+            <section class="output-section journal-manager" id="journalManagerSection">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Journal Manager</h3>
+                  <span class="section-count" id="journalManagerCount">0 entries</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button" id="inferJournalsButton" type="button">Infer Journals</button>
+                  <button class="ghost-button" id="auditJournalsButton" type="button">Audit All</button>
+                  <button class="ghost-button" id="importGeneratedJournalsButton" type="button">Import Generated</button>
+                  <button class="ghost-button" id="copyJournalExportButton" type="button">Copy Export</button>
+                  <button class="ghost-button" id="addJournalButton" type="button">Add Journal</button>
+                </div>
+              </div>
+
+              <div class="journal-toolbar">
+                <input id="journalSearch" placeholder="Search journals, keywords, or body..." />
+                <select id="journalSort">
+                  <option value="edited">Recently edited</option>
+                  <option value="title">Title</option>
+                  <option value="category">Category</option>
+                  <option value="length">Body length</option>
+                </select>
+                <select id="journalTemplate">
+                  <option>Blank Entry</option>
+                  <option>Person</option>
+                  <option>Place</option>
+                  <option>Object</option>
+                  <option>Event</option>
+                  <option>Relationship</option>
+                  <option>World Rule</option>
+                  <option>Temporary Status</option>
+                  <option>Behavior Mode</option>
+                </select>
+                <input id="newJournalCategory" maxlength="32" placeholder="New category" />
+                <button class="ghost-button" id="addJournalCategoryButton" type="button">Add Category</button>
+              </div>
+
+              <div class="journal-category-tabs" id="journalCategoryTabs"></div>
+
+              <div class="journal-review-controls">
+                <label class="check-row journal-auto-row">
+                  <input id="autoInferJournals" type="checkbox" />
+                  <span>Auto-create journal drafts after generation</span>
+                </label>
+              </div>
+
+              <section class="journal-review-panel hidden" id="journalReviewPanel">
+                <div class="journal-review-head">
+                  <div>
+                    <strong>Review Queue</strong>
+                    <span id="journalDraftCount">0 drafts</span>
+                  </div>
+                  <div class="journal-review-actions">
+                    <button class="ghost-button" id="acceptAllJournalDraftsButton" type="button">Accept All</button>
+                    <button class="ghost-button" id="rejectAllJournalDraftsButton" type="button">Reject All</button>
+                  </div>
+                </div>
+                <div class="journal-review-list" id="journalReviewQueue"></div>
+              </section>
+
+              <div class="journal-workspace">
+                <div class="journal-browser" id="journalBrowser" aria-label="Journal browser"></div>
+                <div class="journal-editor">
+                  <div class="field-grid">
+                    <label>
+                      Journal Title
+                      <input id="journalTitle" maxlength="80" placeholder="Jessica, Five Guys, Chicago Trip..." />
+                    </label>
+                    <label>
+                      Category
+                      <select id="journalCategory"></select>
+                    </label>
+                  </div>
+                  <label>
+                    <span class="field-label-row">
+                      <span>Keywords</span>
+                      <span class="section-count" id="journalKeywordCount">0 / 8 Keywords</span>
+                    </span>
+                    <input id="journalKeywords" placeholder="Press Enter or use commas: Jessica, Princess, Partner" />
+                  </label>
+                  <div class="keyword-chip-row" id="journalKeywordChips"></div>
+                  <label>
+                    <span class="field-label-row">
+                      <span>Journal Body</span>
+                      <span class="section-count" id="journalBodyCount">0 / 500 Characters</span>
+                    </span>
+                    <textarea id="journalBody" maxlength="500" spellcheck="false" placeholder="Write concise third-person facts for one topic. Avoid story prose and duplicated detail."></textarea>
+                  </label>
+                  <div class="journal-editor-actions">
+                    <button class="ghost-button" id="newJournalFromEditorButton" type="button">New</button>
+                    <button class="ghost-button" id="optimizeJournalButton" type="button">AI Optimize</button>
+                    <button class="ghost-button" id="deleteJournalButton" type="button">Delete</button>
+                    <button class="primary-button" id="saveJournalButton" type="button">Save Journal</button>
+                  </div>
+                  <div class="journal-analysis" id="journalAnalysis"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Behavioral Tendencies</h3>
+                  <span class="section-count" id="behaviorCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="behavior">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="behavior">Copy</button>
+                </div>
+              </div>
+              <textarea id="behaviorOutput" maxlength="450" spellcheck="false" placeholder="3-5 observable behaviors and decision patterns."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="behaviorKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="behaviorKeyphrases">Copy</button>
+                </div>
+                <textarea id="behaviorKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Daily Routine</h3>
+                  <span class="section-count" id="routineCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="routine">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="routine">Copy</button>
+                </div>
+              </div>
+              <textarea id="routineOutput" maxlength="450" spellcheck="false" placeholder="3-5 concrete details from an ordinary day."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="routineKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="routineKeyphrases">Copy</button>
+                </div>
+                <textarea id="routineKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Contradictions</h3>
+                  <span class="section-count" id="contradictionsCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="contradictions">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="contradictions">Copy</button>
+                </div>
+              </div>
+              <textarea id="contradictionsOutput" maxlength="450" spellcheck="false" placeholder="1-3 meaningful tensions that affect behavior."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="contradictionsKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="contradictionsKeyphrases">Copy</button>
+                </div>
+                <textarea id="contradictionsKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Decision-Making Style</h3>
+                  <span class="section-count" id="decisionCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="decision">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="decision">Copy</button>
+                </div>
+              </div>
+              <textarea id="decisionOutput" maxlength="450" spellcheck="false" placeholder="How they gather information, choose, delay, or act."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="decisionKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="decisionKeyphrases">Copy</button>
+                </div>
+                <textarea id="decisionKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Distinctive Habits</h3>
+                  <span class="section-count" id="habitsCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="habits">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="habits">Copy</button>
+                </div>
+              </div>
+              <textarea id="habitsOutput" maxlength="450" spellcheck="false" placeholder="3-5 specific habits users will notice in roleplay."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="habitsKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="habitsKeyphrases">Copy</button>
+                </div>
+                <textarea id="habitsKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Local Knowledge</h3>
+                  <span class="section-count" id="localKnowledgeCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="localKnowledge">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="localKnowledge">Copy</button>
+                </div>
+              </div>
+              <textarea id="localKnowledgeOutput" maxlength="450" spellcheck="false" placeholder="3-5 facts they know because of where they live or work."></textarea>
+              <div class="keyphrase-field">
+                <div class="keyphrase-header">
+                  <label for="localKnowledgeKeyphrasesOutput">Keyphrases</label>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="localKnowledgeKeyphrases">Copy</button>
+                </div>
+                <textarea id="localKnowledgeKeyphrasesOutput" spellcheck="false" placeholder="6-8 comma-separated recall triggers."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Backstory</h3>
+                  <span class="section-count" id="backstoryCount">0 / 2300</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="backstory">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="backstory">Copy</button>
+                </div>
+              </div>
+              <textarea id="backstoryOutput" spellcheck="false" placeholder="Backstory will appear here."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Response Directive</h3>
+                  <span class="section-count" id="rdCount">0 / 250</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="rd">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="rd">Copy</button>
+                </div>
+              </div>
+              <textarea id="rdOutput" spellcheck="false" placeholder="Response Directive will appear here."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Key Memories</h3>
+                  <span class="section-count" id="kmCount">0 / 900</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="kms">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="kms">Copy</button>
+                </div>
+              </div>
+              <textarea id="kmOutput" spellcheck="false" placeholder="Key Memories will appear here."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Example Message</h3>
+                  <span class="section-count" id="exampleCount">0 / 700</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="example">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="example">Copy</button>
+                </div>
+              </div>
+              <textarea id="exampleOutput" spellcheck="false" placeholder="#Tone, #Speech, #Length, #Rules, and a short sample message will appear here."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Opening Greeting</h3>
+                  <span class="section-count" id="openingGreetingCount">0 / 850</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button" id="sceneVariantsButton" type="button">Variants</button>
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="opening">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="opening">Copy</button>
+                </div>
+              </div>
+              <textarea id="openingGreetingOutput" spellcheck="false" placeholder="Opening scene message that pulls the player in."></textarea>
+              <div class="greeting-studio" id="greetingStudioPanel" aria-label="Greeting Studio">
+                <div class="greeting-studio-head">
+                  <div>
+                    <p class="eyebrow">Greeting Studio</p>
+                    <h4>Shape the first message</h4>
+                  </div>
+                  <div class="greeting-studio-actions">
+                    <button class="ghost-button" id="checkGreetingButton" type="button">Check</button>
+                    <button class="ghost-button" id="rewriteGreetingButton" type="button">Draft Rewrite</button>
+                  </div>
+                </div>
+                <div class="greeting-studio-grid">
+                  <label>
+                    Studio brief
+                    <textarea id="greetingStudioBrief" rows="2" maxlength="420" placeholder="Optional: what should this opening accomplish, avoid, or emphasize?"></textarea>
+                  </label>
+                  <label>
+                    Opening style
+                    <select id="greetingStudioStyle">
+                      <option>Natural first contact</option>
+                      <option>Practical question</option>
+                      <option>Quiet invitation</option>
+                      <option>Conflict without emergency</option>
+                      <option>Mystery without melodrama</option>
+                      <option>Established familiarity</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="greeting-report hidden" id="greetingStudioReport"></div>
+                <div class="greeting-draft hidden" id="greetingDraftPanel">
+                  <div class="greeting-draft-head">
+                    <strong>Rewrite Draft</strong>
+                    <button class="ghost-button" id="applyGreetingDraftButton" type="button">Apply Draft</button>
+                  </div>
+                  <textarea id="greetingDraftOutput" spellcheck="false" placeholder="Accepted suggestions will generate a revised draft here."></textarea>
+                </div>
+              </div>
+              <div class="variant-panel hidden" id="sceneVariantsPanel" aria-label="Scene starter variants">
+                <div class="variant-head">
+                  <span>Scene starter variants</span>
+                  <button class="ghost-button" id="closeVariantsButton" type="button">Close</button>
+                </div>
+                <div class="variant-grid">
+                  <section class="variant-card">
+                    <div class="variant-card-head">
+                      <h4>Quiet / Intimate</h4>
+                      <button class="ghost-button apply-variant" type="button" data-variant="quiet">Use</button>
+                    </div>
+                    <textarea id="quietVariantOutput" spellcheck="false" placeholder="Generate variants to fill this option."></textarea>
+                  </section>
+                  <section class="variant-card">
+                    <div class="variant-card-head">
+                      <h4>Conflict Forward</h4>
+                      <button class="ghost-button apply-variant" type="button" data-variant="conflict">Use</button>
+                    </div>
+                    <textarea id="conflictVariantOutput" spellcheck="false" placeholder="Generate variants to fill this option."></textarea>
+                  </section>
+                  <section class="variant-card">
+                    <div class="variant-card-head">
+                      <h4>Mystery / Hook</h4>
+                      <button class="ghost-button apply-variant" type="button" data-variant="mystery">Use</button>
+                    </div>
+                    <textarea id="mysteryVariantOutput" spellcheck="false" placeholder="Generate variants to fill this option."></textarea>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Player Relationship</h3>
+                  <span class="section-count" id="playerRelationshipCount">0 / 350</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="relationship">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="relationship">Copy</button>
+                </div>
+              </div>
+              <textarea id="playerRelationshipOutput" spellcheck="false" placeholder="How the player knows the Kin, plus a reply angle."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Avatar Description</h3>
+                  <span class="section-count" id="avatarCount">0 / 600</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="avatar">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="avatar">Copy</button>
+                </div>
+              </div>
+              <textarea id="avatarOutput" spellcheck="false" placeholder="Avatar Description will appear here."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Portrait Prompt</h3>
+                  <span class="section-count" id="portraitPromptCount">0 / 200</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="portrait">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="portrait">Copy</button>
+                </div>
+              </div>
+              <textarea id="portraitPromptOutput" spellcheck="false" placeholder="Under 200 characters for Kindroid portrait generation."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Physical Description</h3>
+                  <span class="section-count" id="physicalDescriptionCount">0 / 520</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="physical">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="physical">Copy</button>
+                </div>
+              </div>
+              <textarea id="physicalDescriptionOutput" spellcheck="false" placeholder="Physical body description only. No clothing."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Face Detail</h3>
+                  <span class="section-count" id="faceDetailCount">0 / 200</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="face">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="face">Copy</button>
+                </div>
+              </div>
+              <textarea id="faceDetailOutput" spellcheck="false" placeholder="Under 200 characters for face detail."></textarea>
+            </section>
+
+            <section class="output-section appearance-reference-panel" id="appearanceReferencePanel" aria-label="Generated appearance reference">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Generated Appearance Reference</h3>
+                </div>
+                <div class="section-actions">
+                  <button class="primary-button" id="generateProfileImageButton" type="button">Generate Face Reference</button>
+                  <button class="ghost-button" id="generateFullBodyImageButton" type="button">Generate Full Body</button>
+                </div>
+              </div>
+              <div class="appearance-reference-image">
+                <img id="appearanceReferenceImage" alt="Generated appearance reference" />
+                <div class="appearance-reference-empty" id="appearanceReferenceEmpty">
+                  Generate a close face reference here or use Image Studio to pin a visual reference.
+                </div>
+              </div>
+              <div class="appearance-reference-meta">
+                <section>
+                  <p class="eyebrow">Image Prompt Used</p>
+                  <textarea id="appearanceReferencePrompt" readonly spellcheck="false" placeholder="Image Studio prompt will appear here after generation."></textarea>
+                </section>
+                <section>
+                  <p class="eyebrow">Image Notes</p>
+                  <textarea id="appearanceReferenceNotes" readonly spellcheck="false" placeholder="Model, scene, seed, and timestamp will appear here."></textarea>
+                </section>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Gallery Prompt - Dinner</h3>
+                  <span class="section-count" id="galleryDinnerCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="galleryDinner">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="galleryDinner">Copy</button>
+                </div>
+              </div>
+              <textarea id="galleryDinnerOutput" spellcheck="false" placeholder="Dinner or meal scene image prompt."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Gallery Prompt - Outdoor</h3>
+                  <span class="section-count" id="galleryOutdoorCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="galleryOutdoor">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="galleryOutdoor">Copy</button>
+                </div>
+              </div>
+              <textarea id="galleryOutdoorOutput" spellcheck="false" placeholder="Outdoor scene image prompt: camping, hiking, beach, swimming, park, street, etc."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Gallery Prompt - Intimate</h3>
+                  <span class="section-count" id="galleryIntimateCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="galleryIntimate">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="galleryIntimate">Copy</button>
+                </div>
+              </div>
+              <textarea id="galleryIntimateOutput" spellcheck="false" placeholder="Non-nude intimate image prompt: dim light, lingerie/sleepwear, private atmosphere."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Gallery Prompt - Public</h3>
+                  <span class="section-count" id="galleryPublicCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="galleryPublic">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="galleryPublic">Copy</button>
+                </div>
+              </div>
+              <textarea id="galleryPublicOutput" spellcheck="false" placeholder="Public scene image prompt: work, street, cafe, event, errands."></textarea>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Gallery Prompt - Casual</h3>
+                  <span class="section-count" id="galleryCasualCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="galleryCasual">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="galleryCasual">Copy</button>
+                </div>
+              </div>
+              <textarea id="galleryCasualOutput" spellcheck="false" placeholder="Casual sitting-around image prompt: home, couch, reading, coffee, downtime."></textarea>
+            </section>
+
+            <section class="output-section image-studio-section" id="imageStudioSection">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Image Studio</h3>
+                  <span class="section-count" id="imageStudioPromptCount">0 characters</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button" id="buildImagePromptButton" type="button">Build Prompt</button>
+                  <button class="primary-button" id="generateImageButton" type="button">Generate Image</button>
+                  <button class="ghost-button" id="copyImagePromptButton" type="button">Copy</button>
+                </div>
+              </div>
+              <div class="image-studio-grid">
+                <label>
+                  Scene
+                  <select id="imageStudioScene">
+                    <option value="portrait">Portrait</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="outdoor">Outdoor</option>
+                    <option value="intimate">Intimate</option>
+                    <option value="public">Public</option>
+                    <option value="casual">Casual</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </label>
+                <label>
+                  Image model
+                  <select id="imageStudioModelTier">
+                    <option value="budget">Budget - gpt-4.1-mini</option>
+                    <option value="fast">Fast - gpt-5.6-luna</option>
+                    <option value="balanced">Balanced - gpt-5.6-terra</option>
+                    <option value="best">Best - gpt-5.6</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </label>
+                <label>
+                  Consistency
+                  <select id="imageStudioConsistency">
+                    <option>Balanced likeness</option>
+                    <option>Strict likeness</option>
+                    <option>Creative variation</option>
+                  </select>
+                </label>
+                <label>
+                  Style
+                  <select id="imageStudioStyle">
+                    <option>Realistic photograph</option>
+                    <option>Cinematic portrait</option>
+                    <option>Editorial character photo</option>
+                    <option>Natural candid photo</option>
+                    <option>Stylized but realistic</option>
+                  </select>
+                </label>
+                <label>
+                  Visual seed
+                  <input id="imageStudioSeed" maxlength="24" placeholder="Optional, auto-filled on generate" />
+                </label>
+              </div>
+              <input id="imageStudioCustomModel" maxlength="80" placeholder="Custom image model id" hidden />
+              <label>
+                Custom scene notes
+                <textarea id="imageStudioCustomPrompt" rows="2" maxlength="600" placeholder="Optional: add scene details, clothing, mood, location, props, or what to avoid."></textarea>
+              </label>
+              <textarea id="imageStudioFinalPromptOutput" spellcheck="false" placeholder="Build a final image prompt here. Actual image generation stays manual for Phase 2."></textarea>
+              <div class="image-upload-row">
+                <input class="hidden-file-input" id="portraitUploadInput" type="file" accept="image/png,image/jpeg,image/webp" />
+                <button class="ghost-button" id="uploadPortraitButton" type="button">Upload Portrait</button>
+                <span id="portraitUploadHint">Use a local PNG, JPG, or WebP when you already have a character image.</span>
+              </div>
+              <div class="image-preview-panel hidden" id="imagePreviewPanel">
+                <div class="image-preview-head">
+                  <div>
+                    <strong>Portrait Preview</strong>
+                    <span id="imagePreviewMeta">No image yet</span>
+                  </div>
+                  <button class="ghost-button" id="saveGeneratedImageButton" type="button">Save Image</button>
+                  <button class="ghost-button" id="clearImagePreviewButton" type="button">Clear</button>
+                </div>
+                <div class="image-generation-status" id="imageGenerationStatus">Ready to generate.</div>
+                <div class="image-generation-bar" id="imageGenerationBar" hidden><span></span></div>
+                <div class="image-preview-frame">
+                  <img id="imagePreview" alt="Generated Kin image preview" />
+                  <div class="image-generating-overlay" id="imageGeneratingOverlay" hidden>
+                    <strong>Generating image...</strong>
+                    <span id="imageGeneratingModel">Preparing model</span>
+                  </div>
+                </div>
+                <textarea id="imageRevisedPromptOutput" spellcheck="false" placeholder="Revised prompt or image notes will appear here."></textarea>
+              </div>
+            </section>
+
+            <section class="output-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h3>Player Profile</h3>
+                  <span class="section-count" id="playerProfileCount">0 / 450</span>
+                </div>
+                <div class="section-actions">
+                  <button class="ghost-button reroll-section" type="button" data-reroll-section="player">Reroll</button>
+                  <button class="ghost-button copy-section" type="button" data-copy-section="player">Copy</button>
+                </div>
+              </div>
+              <textarea id="playerProfileOutput" spellcheck="false" placeholder="Compatible player bio under 450 characters."></textarea>
+            </section>
+            </div>
+          </div>
+        </section>
+      </main>
+      </div>
+
+      <aside class="studio-inspector" aria-label="Kin snapshot">
+        <section class="inspector-card portrait-card">
+          <div class="inspector-card-head">
+            <strong>Preview</strong>
+            <span id="snapshotMode">Single Character</span>
+          </div>
+          <div class="snapshot-portrait">
+            <img id="snapshotImage" alt="Generated character preview" hidden />
+            <div id="snapshotImageEmpty">No image yet</div>
+          </div>
+        </section>
+
+        <section class="inspector-card">
+          <div class="inspector-card-head">
+            <strong>At a Glance</strong>
+            <span id="snapshotProgressText">0%</span>
+          </div>
+          <dl class="snapshot-list">
+            <div><dt>Name</dt><dd id="snapshotName">Not set</dd></div>
+            <div><dt>Type</dt><dd id="snapshotType">Single Character</dd></div>
+            <div><dt>Age</dt><dd id="snapshotAge">Not set</dd></div>
+            <div><dt>Role</dt><dd id="snapshotRole">Not set</dd></div>
+            <div><dt>Location</dt><dd id="snapshotLocation">Not set</dd></div>
+            <div><dt>Tone</dt><dd id="snapshotTone">Not set</dd></div>
+            <div><dt>Journals</dt><dd id="snapshotJournals">0</dd></div>
+            <div><dt>Sections</dt><dd id="snapshotSections">0</dd></div>
+          </dl>
+          <div class="snapshot-progress" aria-hidden="true"><span id="snapshotProgressFill"></span></div>
+        </section>
+
+        <section class="inspector-card" id="snapshotWarningsCard">
+          <div class="inspector-card-head">
+            <strong>Watchlist</strong>
+            <span id="snapshotWarningsCount">0</span>
+          </div>
+          <ul class="snapshot-warnings" id="snapshotWarnings"></ul>
+        </section>
+
+        <section class="inspector-card inspector-actions">
+          <strong>Quick Actions</strong>
+          <button class="primary-button" type="button" data-trigger-action="generate">Generate</button>
+          <button class="ghost-button" type="button" data-trigger-action="surprise">Surprise Me</button>
+          <button class="ghost-button" type="button" data-trigger-action="consistency">Check Consistency</button>
+          <button class="ghost-button" type="button" data-trigger-action="save-package">Save Package</button>
+        </section>
+      </aside>
+    </div>
+
+    <div class="help-overlay" id="personalityHelpOverlay" hidden>
+      <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="personalityHelpTitle">
+        <div class="help-header">
+          <div>
+            <p class="eyebrow" id="personalityHelpKicker">Personality help</p>
+            <h2 id="personalityHelpTitle">Personality Guidance</h2>
+          </div>
+          <button class="ghost-button" id="closePersonalityHelp" type="button">Close</button>
+        </div>
+        <div class="help-content" id="personalityHelpContent"></div>
+      </div>
+    </div>
+
+    <div class="help-overlay" id="kinImportOverlay" hidden>
+      <div class="help-panel kin-import-panel" role="dialog" aria-modal="true" aria-labelledby="kinImportTitle">
+        <div class="help-header">
+          <div>
+            <p class="eyebrow">Import</p>
+            <h2 id="kinImportTitle">Infer Settings From Kin Text</h2>
+          </div>
+          <button class="ghost-button" id="closeKinImportButton" type="button">Close</button>
+        </div>
+        <div class="help-content">
+          <p>Paste an existing Kin profile, including Backstory, Response Directive, Key Memories, Example Message, Opening Greeting, Avatar Description, journals, or any loose notes. KinForge will infer editable settings from the text.</p>
+          <label>
+            Kin type hint
+            <select id="kinImportCreationTypeHint">
+              <option value="">Infer from text</option>
+              <option>Single Character</option>
+              <option>World / NPC Ensemble</option>
+              <option>Multi-Character Kin</option>
+            </select>
+          </label>
+          <textarea id="kinImportText" rows="12" spellcheck="false" placeholder="Paste the existing Kin text here..."></textarea>
+          <div class="import-actions">
+            <button class="ghost-button" id="chooseKinImportFileButton" type="button">Choose Text File</button>
+            <button class="ghost-button" id="clearKinImportTextButton" type="button">Clear Text</button>
+            <button class="primary-button" id="inferKinImportButton" type="button">Infer Settings</button>
+          </div>
+          <p class="section-note" id="kinImportStatus">Ready to import.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-overlay character-sheet-overlay" id="characterSheetOverlay" hidden>
+      <div class="character-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="characterSheetTitle">
+        <div class="character-sheet-head">
+          <div class="character-sheet-title">
+            <div class="character-sheet-icon">KF</div>
+            <div>
+              <h2 id="characterSheetTitle">Character Sheet</h2>
+              <p>A complete overview of your character's core identity and Kindroid output.</p>
+            </div>
+          </div>
+          <div class="character-sheet-actions">
+            <button class="ghost-button" id="exportCharacterSheetButton" type="button">Export</button>
+            <button class="ghost-button icon-button" id="closeCharacterSheetButton" type="button" aria-label="Close character sheet">×</button>
+          </div>
+        </div>
+        <div class="character-sheet-content" id="characterSheetContent"></div>
+        <div class="character-sheet-foot">
+          <span>This is the Kindroid output preview. Edit any field in KinForge and regenerate at any time.</span>
+          <button class="primary-button" id="editInKinForgeButton" type="button">Edit in KinForge</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./src/app.bundle.js"></script>
+  </body>
+</html>
+

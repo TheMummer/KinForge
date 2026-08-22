@@ -1,0 +1,303 @@
+# KinForge Character Generation - Iteration 4 Improvements
+
+## Objective
+
+Increase character individuality by focusing on routines, contradictions, behavioral patterns, and earned relationships.
+
+Characters should feel like people who happen to exist inside a story, not stories wearing a human mask.
+
+---
+
+# New Section: Daily Routine
+
+Generate a Daily Routine section.
+
+Include 3-5 concrete details describing how the character typically spends an ordinary day.
+
+Examples:
+
+Good:
+
+* Eats breakfast at the same diner every morning.
+* Checks work messages before getting out of bed.
+* Takes evening walks to clear their head.
+* Always orders the same drink.
+* Works late and sleeps irregular hours.
+
+Bad:
+
+* Reflects on their loneliness.
+* Contemplates the meaning of justice.
+
+Requirements:
+
+* Focus on actions.
+* Focus on habits.
+* Focus on routines.
+* Avoid emotional summaries.
+
+---
+
+# New Section: Contradictions
+
+Generate 1-3 meaningful contradictions.
+
+Real people often hold conflicting traits.
+
+Examples:
+
+* Distrusts people but keeps helping them.
+* Craves stability but constantly creates chaos.
+* Avoids attachment but adopts strays.
+* Hates corruption but bends rules when necessary.
+* Loves privacy but knows everyone's business.
+
+Requirements:
+
+* Contradictions should create believable tension.
+* Contradictions should affect behavior.
+
+Avoid:
+
+* Contradictions based solely on emotions.
+
+---
+
+# Relationship Progression Changes
+
+Current issue:
+
+Generated characters often begin with the user already central to their life.
+
+Examples to avoid:
+
+* Must protect the user.
+* Deeply cares about the user.
+* User is already emotionally significant.
+* User is central to the primary plot.
+
+New rule:
+
+Relationships should begin from a plausible point of contact.
+
+Examples:
+
+* Client
+* Neighbor
+* Witness
+* Coworker
+* New resident
+* Informant
+* Customer
+
+Generate importance gradually.
+
+Do not assume emotional significance before the relationship develops.
+
+---
+
+# Reduce Repeated Motifs
+
+Current issue:
+
+The model repeats the same details across multiple sections.
+
+Example:
+
+Cigarettes appear in:
+
+* Likes
+* Habits
+* Texture
+* Greeting
+* Memories
+
+New rule:
+
+Track repeated motifs.
+
+If a detail appears in more than two sections:
+
+* Replace additional appearances with new information.
+* Prioritize variety.
+
+Characters should feel layered, not repetitive.
+
+---
+
+# Increase Environmental Specificity
+
+Current issue:
+
+Settings often rely on atmosphere instead of location details.
+
+Weak:
+
+* Rain-soaked city
+* Dangerous streets
+* Corrupt government
+
+Strong:
+
+* Office above a pawn shop.
+* Diner frequented by detectives and reporters.
+* Council district under investigation.
+* Neighborhood abandoned after factory closures.
+
+New rule:
+
+Generate 3-5 specific environmental facts.
+
+Facts should describe:
+
+* Places
+* Organizations
+* Neighborhoods
+* Local institutions
+* Daily realities
+
+Avoid relying solely on weather or mood.
+
+---
+
+# Reduce Genre Self-Awareness
+
+Current issue:
+
+Characters often speak like narrators describing the story.
+
+Examples to avoid:
+
+* This city doesn't forgive mistakes.
+* This cat-and-mouse game.
+* This dangerous dance.
+* We are standing at a crossroads.
+
+New rule:
+
+Characters should speak from their perspective.
+
+Dialogue should:
+
+* Solve problems.
+* Ask questions.
+* Reveal personality.
+* Advance scenes.
+
+Dialogue should not summarize themes or describe the narrative.
+
+---
+
+# Expand Behavioral Tendencies
+
+Current issue:
+
+Behavioral tendencies are working but remain partially emotional.
+
+New rule:
+
+Generate tendencies that affect decisions.
+
+Examples:
+
+* Double-checks information before acting.
+* Keeps backup plans.
+* Memorizes names and faces.
+* Avoids making promises.
+* Reads documents twice.
+
+Behavior should predict future actions.
+
+Behavior should be more important than emotional labels.
+
+---
+
+# Expand Local Knowledge
+
+Current issue:
+
+Local Knowledge still drifts toward atmosphere.
+
+New rule:
+
+Local Knowledge should focus on information.
+
+Examples:
+
+* Knows which city officials accept bribes.
+* Knows which apartments have recurring plumbing problems.
+* Knows which bartender hears every rumor.
+* Knows which neighborhood becomes dangerous after midnight.
+
+Avoid:
+
+* Neon.
+* Rain.
+* Cigarette smoke.
+* General mood descriptions.
+
+Knowledge should be actionable.
+
+---
+
+# Add Decision-Making Profile
+
+Generate a new section:
+
+Decision-Making Style
+
+Examples:
+
+* Gathers information before acting.
+* Acts immediately when people are in danger.
+* Prefers negotiation over confrontation.
+* Delegates responsibility whenever possible.
+* Trusts evidence more than intuition.
+
+Purpose:
+
+Characters should become recognizable by how they make decisions.
+
+---
+
+# Add Character Recognition Test
+
+Before finalizing output, evaluate:
+
+"If the occupation, setting, genre, and aesthetic were removed, would this still be a recognizable person?"
+
+If no:
+
+Generate additional:
+
+* Habits
+* Routines
+* Contradictions
+* Decision-making traits
+* Local knowledge
+
+Continue until individuality is established.
+
+---
+
+# Priority Hierarchy
+
+When generating content, prioritize in this order:
+
+1. Behavior
+2. Routine
+3. History
+4. Relationships
+5. Occupation
+6. Environment
+7. Story
+8. Genre
+9. Aesthetic
+
+Genre should modify the character.
+
+Genre should never define the character.
+
+The character must remain recognizable when stripped of genre elements.
+
+Of everything on this list, I think Daily Routine, Contradictions, and Decision-Making Style will give you the biggest jump in quality. Right now KinForge is getting pretty good at telling me what happened to a character. The next step is teaching it how that character gets through an ordinary Tuesday. That's where people usually become memorable.
