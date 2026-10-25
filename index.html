@@ -120,7 +120,7 @@
       <div class="studio-main">
       <header class="topbar">
         <div>
-          <p class="eyebrow title-kicker">Kindroid profile forge <span class="version-badge">v0.78.0</span></p>
+          <p class="eyebrow title-kicker">Kindroid V2 profile forge <span class="version-badge">v0.81.4</span></p>
           <h1>KinForge Kindroid Generator</h1>
         </div>
         <div class="topbar-actions">
@@ -330,16 +330,16 @@
               </div>
             </section>
 
-            <section class="interview-box player-box" aria-label="Player profile inputs">
+            <section class="interview-box player-box" aria-label="User persona inputs">
               <div class="question-head">
                 <div>
-                  <p class="eyebrow">Player profile</p>
+                  <p class="eyebrow">User persona</p>
                   <h2>Compatible user character</h2>
                 </div>
               </div>
               <label class="check-row">
                 <input id="createPlayerProfile" type="checkbox" checked />
-                <span>Create compatible player profile</span>
+                <span>Create compatible user persona</span>
               </label>
               <div class="field-grid">
                 <label>
@@ -1186,11 +1186,11 @@
                 <div class="kindroid-field-map" id="kindroidFieldMap" aria-label="Kindroid fields to preview">
                   <label><input type="checkbox" data-kindroid-field="ai_name" checked /> Name</label>
                   <label><input type="checkbox" data-kindroid-field="ai_gender" checked /> Gender</label>
-                  <label><input type="checkbox" data-kindroid-field="ai_backstory" checked /> Backstory</label>
+                  <label><input type="checkbox" data-kindroid-field="ai_backstory" checked /> Personality</label>
                   <label><input type="checkbox" data-kindroid-field="ai_memory" checked /> Key Memories</label>
                   <label><input type="checkbox" data-kindroid-field="ai_directive" checked /> Response Directive</label>
                   <label><input type="checkbox" data-kindroid-field="ai_example_message" checked /> Example Message</label>
-                  <label><input type="checkbox" data-kindroid-field="current_scene" checked /> Current Scene</label>
+                  <label><input type="checkbox" data-kindroid-field="current_scene" checked /> Scene Setting</label>
                   <label><input type="checkbox" data-kindroid-field="user_name" checked /> User Name</label>
                   <label><input type="checkbox" data-kindroid-field="user_gender" /> User Gender</label>
                   <label><input type="checkbox" data-kindroid-field="ai_additional_context" /> Additional Context</label>
@@ -1214,9 +1214,9 @@
                   </div>
                 </section>
                 <section class="kindroid-danger-zone">
-                  <strong>Chat Break / Opening Greeting</strong>
-                  <p>Type CHAT BREAK to reset short-term chat memory and set the generated opening greeting as the first message.</p>
-                  <textarea id="kindroidChatBreakGreeting" readonly spellcheck="false" placeholder="Build a chat break preview from Opening Greeting."></textarea>
+                  <strong>Chat Break / Scene Setting</strong>
+                  <p>Type CHAT BREAK to reset short-term chat memory and set the generated scene setting as the first message.</p>
+                  <textarea id="kindroidChatBreakGreeting" readonly spellcheck="false" placeholder="Build a chat break preview from Scene Setting."></textarea>
                   <label class="budget-mode-toggle">
                     <input id="kindroidWipeCascaded" type="checkbox" />
                     <span>
@@ -1288,7 +1288,7 @@
               <h2 id="outputTitle">Ready when you are</h2>
             </div>
             <div class="output-actions">
-              <input class="hidden-file-input" id="loadFileInput" type="file" accept=".txt,.json,text/plain,application/json" />
+              <input class="hidden-file-input" id="loadFileInput" type="file" accept=".kin,.txt,.json,text/plain,application/json" />
               <input class="hidden-file-input" id="kinImportFileInput" type="file" accept=".txt,text/plain" />
               <button class="ghost-button" id="loadButton" type="button">Load</button>
               <button class="ghost-button" id="openKinImportButton" type="button">Import Kin Text</button>
@@ -1349,7 +1349,7 @@
               <div class="section-header">
                 <div class="section-title">
                   <h3>Tagline</h3>
-                  <span class="section-count" id="taglineCount">0 / 160</span>
+                  <span class="section-count" id="taglineCount">0 / 100</span>
                 </div>
                 <div class="section-actions">
                   <button class="ghost-button reroll-section" type="button" data-reroll-section="tagline">Reroll</button>
@@ -1616,7 +1616,7 @@
             <section class="output-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h3>Backstory</h3>
+                  <h3>Personality</h3>
                   <span class="section-count" id="backstoryCount">0 / 2300</span>
                 </div>
                 <div class="section-actions">
@@ -1624,7 +1624,7 @@
                   <button class="ghost-button copy-section" type="button" data-copy-section="backstory">Copy</button>
                 </div>
               </div>
-              <textarea id="backstoryOutput" spellcheck="false" placeholder="Backstory will appear here."></textarea>
+              <textarea id="backstoryOutput" spellcheck="false" placeholder="Personality will appear here."></textarea>
             </section>
 
             <section class="output-section">
@@ -1672,7 +1672,7 @@
             <section class="output-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h3>Opening Greeting</h3>
+                  <h3>Scene Setting</h3>
                   <span class="section-count" id="openingGreetingCount">0 / 850</span>
                 </div>
                 <div class="section-actions">
@@ -1681,12 +1681,12 @@
                   <button class="ghost-button copy-section" type="button" data-copy-section="opening">Copy</button>
                 </div>
               </div>
-              <textarea id="openingGreetingOutput" spellcheck="false" placeholder="Opening scene message that pulls the player in."></textarea>
-              <div class="greeting-studio" id="greetingStudioPanel" aria-label="Greeting Studio">
+              <textarea id="openingGreetingOutput" spellcheck="false" placeholder="Scene setting that pulls the player into the starting moment."></textarea>
+              <div class="greeting-studio" id="greetingStudioPanel" aria-label="Scene Studio">
                 <div class="greeting-studio-head">
                   <div>
-                    <p class="eyebrow">Greeting Studio</p>
-                    <h4>Shape the first message</h4>
+                    <p class="eyebrow">Scene Studio</p>
+                    <h4>Shape the starting scene</h4>
                   </div>
                   <div class="greeting-studio-actions">
                     <button class="ghost-button" id="checkGreetingButton" type="button">Check</button>
@@ -1753,7 +1753,7 @@
             <section class="output-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h3>Player Relationship</h3>
+                  <h3>Relationship Context</h3>
                   <span class="section-count" id="playerRelationshipCount">0 / 350</span>
                 </div>
                 <div class="section-actions">
@@ -1761,7 +1761,7 @@
                   <button class="ghost-button copy-section" type="button" data-copy-section="relationship">Copy</button>
                 </div>
               </div>
-              <textarea id="playerRelationshipOutput" spellcheck="false" placeholder="How the player knows the Kin, plus a reply angle."></textarea>
+              <textarea id="playerRelationshipOutput" spellcheck="false" placeholder="How the user persona knows the Kin, plus a reply angle."></textarea>
             </section>
 
             <section class="output-section">
@@ -2012,7 +2012,7 @@
             <section class="output-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h3>Player Profile</h3>
+                  <h3>User Persona</h3>
                   <span class="section-count" id="playerProfileCount">0 / 450</span>
                 </div>
                 <div class="section-actions">
@@ -2020,7 +2020,7 @@
                   <button class="ghost-button copy-section" type="button" data-copy-section="player">Copy</button>
                 </div>
               </div>
-              <textarea id="playerProfileOutput" spellcheck="false" placeholder="Compatible player bio under 450 characters."></textarea>
+              <textarea id="playerProfileOutput" spellcheck="false" placeholder="Compatible user persona under 450 characters."></textarea>
             </section>
             </div>
           </div>
@@ -2099,7 +2099,7 @@
           <button class="ghost-button" id="closeKinImportButton" type="button">Close</button>
         </div>
         <div class="help-content">
-          <p>Paste an existing Kin profile, including Backstory, Response Directive, Key Memories, Example Message, Opening Greeting, Avatar Description, journals, or any loose notes. KinForge will infer editable settings from the text.</p>
+          <p>Paste an existing Kin profile, including Personality, Response Directive, Key Memories, Example Message, Scene Setting, Avatar Description, journals, or any loose notes. KinForge will infer editable settings from the text.</p>
           <label>
             Kin type hint
             <select id="kinImportCreationTypeHint">
@@ -2143,6 +2143,9 @@
       </div>
     </div>
 
+    <script src="./src/compact-personality.js"></script>
+    <script src="./src/fflate.js"></script>
+    <script src="./src/kin-bundle.js"></script>
     <script src="./src/app.bundle.js"></script>
   </body>
 </html>

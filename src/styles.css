@@ -2243,6 +2243,23 @@ textarea:focus {
   color: #ffb2a9;
 }
 
+.field-character-count {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.field-character-count[hidden] {
+  display: none;
+}
+
+.section-count.at-limit {
+  color: #e4bd72;
+}
+
 .section-actions {
   display: flex;
   align-items: center;

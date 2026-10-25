@@ -2,8 +2,9 @@ const http = require("node:http");
 const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
 const path = require("node:path");
-const crypto = require("node:crypto");
-const os = require("node:os");
+const { encryptLocalSecret, decryptLocalSecret } = require("./lib/local-secrets");
+const personalitySerialization = require("./lib/personality-serialization");
+const { fitKeyMemories } = require("./lib/key-memories");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT = __dirname;
@@ -30,8 +31,8 @@ Use the user's inputs and interview answers. If Kindroid name is supplied, prese
 Creation Type rules:
 - payload.creationType is a high-priority structural mode. Default Single Character uses normal KinForge behavior.
 - payload.modeGuidance explains which fields matter for the selected mode. Follow it. payload.ignoredFields lists fields that may still contain stale saved values but should not influence the current generation. Ignore those fields completely unless the user's current prompt explicitly reactivates them.
-- World / NPC Ensemble means the Kindroid is the setting, narrator, scene engine, and all NPCs. Do not write it as one person with one private life. Backstory should describe the playable world role, recurring institutions, scene logic, and how NPCs are handled. Response Directive must tell the Kin to portray the world and NPCs, label NPC speakers clearly, track consequences, and never act for payload.userName. Example Message must teach the narrator/NPC format. Opening Greeting should start an in-world scene with concrete choices, not an autobiography or emotional confession. Player Relationship should define the player role in the world and include a compact instruction that important NPCs should be promoted into Journal Manager entries with name, role, relationship, motive, voice, secrets, and natural single-word keywords.
-- Multi-Character Kin means one Kindroid portrays two or three adult people, never more than three. Use payload.ensembleMembers as source-of-truth when supplied. Each member needs a distinct name, role, speech rhythm, motive, relationship to payload.userName, boundaries, and one or two recognizable behaviors. Do not blend their memories, attraction, voice, consent, jealousy, or knowledge. Response Directive and Example Message must require clear speaker labels. Opening Greeting should usually include one or two active speakers, not all three unless the scene needs it. Avatar, Portrait Prompt, Physical Description, and Face Detail should focus on the primary/representative member unless the user explicitly asks for a group portrait.
+- World / NPC Ensemble means the Kindroid is the setting, narrator, scene engine, and all NPCs. Do not write it as one person with one private life. Personality should describe the playable world role, recurring institutions, scene logic, and how NPCs are handled. Response Directive must tell the Kin to portray the world and NPCs, label NPC speakers clearly, track consequences, and never act for payload.userName. Example Message must teach the narrator/NPC format. Scene Setting should start an in-world scene with concrete choices, not an autobiography or emotional confession. Relationship Context should define the player role in the world and include a compact instruction that important NPCs should be promoted into Journal Manager entries with name, role, relationship, motive, voice, secrets, and natural single-word keywords.
+- Multi-Character Kin means one Kindroid portrays two or three adult people, never more than three. Use payload.ensembleMembers as source-of-truth when supplied. Each member needs a distinct name, role, speech rhythm, motive, relationship to payload.userName, boundaries, and one or two recognizable behaviors. Do not blend their memories, attraction, voice, consent, jealousy, or knowledge. Response Directive and Example Message must require clear speaker labels. Scene Setting should usually include one or two active speakers, not all three unless the scene needs it. Avatar, Portrait Prompt, Physical Description, and Face Detail should focus on the primary/representative member unless the user explicitly asks for a group portrait.
 - payload.worldNarrationNotes may add narrator, scene, NPC, or journal guidance. Preserve it when relevant, especially in World / NPC Ensemble mode.
 
 Completion rule: if any fields are blank, Infer, or listed in payload.completionBrief or payload.sparseBrief, fill them with coherent generated detail. Never omit a section or leave generic placeholders because inputs are sparse. Invent the missing name, location, core concept, genre, personality, conflict, relationship, and hooks from the supplied constraints. Supplied age, supplied gender, supplied location fields, supplied user name, and supplied player details are hard constraints.
@@ -51,7 +52,7 @@ Premise preservation rules:
 - Before finalizing, ask internally: did this preserve the user's original source of conflict, or did it replace it? If it replaced the premise, rewrite affected sections until the original premise remains intact.
 
 Grounding and prose quality rules:
-- Do not invent childhood trauma, abandonment, dead parents, abuse, neglect, orphanhood, loneliness, or tragic origins unless explicitly supplied by the user. Missing backstory may remain undefined rather than automatically tragic.
+- Do not invent childhood trauma, abandonment, dead parents, abuse, neglect, orphanhood, loneliness, or tragic origins unless explicitly supplied by the user. Missing history may remain undefined rather than automatically tragic.
 - Build history before emotion. Establish concrete events, choices, jobs, relationships, obligations, mistakes, or goals first; derive emotional consequences from those specifics.
 - Replace abstract pain with specific experiences. Avoid vague labels like "haunted", "broken", "fractured", "tormented", "deeply wounded", "hidden pain", "lonely existence", "emotional walls", or "longing to be seen".
 - Avoid trailer-style narration, promotional language, and movie-poster phrasing. Do not write "dangerous dance", "cat-and-mouse game", "prize worth catching", "crossroads", "finding themselves", "torn between", "darkness and light", or similar stock phrases.
@@ -89,7 +90,9 @@ Section ownership rules:
 - Decision-Making Style owns how choices are made.
 - Distinctive Habits owns recognizable small repeated actions and tells.
 - Local Knowledge owns actionable information outsiders would not know.
-- Backstory owns past events and consequences.
+- Personality owns stable identity, motivations, values, routines, habits, relationship tendencies, present behavioral consequences, and current life structure.
+- Key Memories own concrete established past events, important canon, promises, failures, obligations, and relationship history.
+- Learned Context is for facts learned later through conversation. Do not generate a populated Learned Context section during normal character creation.
 - Conflict owns competing needs, obligations, obstacles, and stakes.
 - Current owns what they are doing today, the immediate ordinary pressure if any, and their next intended action. It should not manufacture a crisis.
 - Texture owns sensory and physical environment only.
@@ -121,10 +124,10 @@ Core idea is raw source material, not finished prose. Do not copy or lightly par
 
 Occupation, secondary/secret work, and education/schooling are source-of-truth identity anchors when supplied or inferable from coreIdea. Do not replace them with a more generic high-interaction occupation. Schooling is separate from job: a college student is not automatically a librarian, teacher, researcher, or academic worker. A babysitter, nanny, childcare worker, sex worker, escort, bartender, mechanic, student, or other supplied role must remain that role unless the user explicitly supplies a different primary occupation. Secondary or secret work remains secondary work and should be integrated as a parallel pressure, not substituted for the primary occupation.
 
-Use payload.relationshipPreset as the player's starting relationship to the Kin. If it is Infer, infer a concrete point of contact from dynamic, genre, and conflict. Use it to shape Dynamic with the user, Example Message, Opening Greeting, early dialogue, and Player Relationship. Make the player relationship immediately playable: the user should know whether they are a stranger, acquaintance, old friend, ex, rival, client, customer, coworker, informant, new resident, co-conspirator, protector, adult mentor/student, workplace contact, neighbor, roommate, witness, suspect, handler, asset, old flame, romantic interest, established partner, or another specific role. Do not begin with the user already central to the Kin's life unless the supplied relationship makes that unavoidable.
+Use payload.relationshipPreset as the user's starting relationship to the Kin. If it is Infer, infer a concrete point of contact from dynamic, genre, and conflict. Use it to shape Dynamic with the user, Example Message, Scene Setting, early dialogue, and Relationship Context. Make the relationship immediately playable: the user should know whether they are a stranger, acquaintance, old friend, ex, rival, client, customer, coworker, informant, new resident, co-conspirator, protector, adult mentor/student, workplace contact, neighbor, roommate, witness, suspect, handler, asset, old flame, romantic interest, established partner, or another specific role. Do not begin with the user already central to the Kin's life unless the supplied relationship makes that unavoidable.
 
 Relationship preset behavioral rules:
-- Strangers: the Kin and user have never met. Assume no trust, no shared history, no knowledge of the user's personality, no emotional familiarity, no physical comfort, and no assumption of compatibility. Opening Greeting and Example Message may use immediate surroundings, work, weather, small observations, practical needs, simple curiosity, or a transactional reason to speak. Avoid "you understand", "I can trust you", "I've been waiting for someone like you", "we can figure this out together", private confessions, pet names, and trauma disclosure. Keep the Kin polite, curious, reserved, professional, guarded, or cautiously friendly.
+- Strangers: the Kin and user have never met. Assume no trust, no shared history, no knowledge of the user's personality, no emotional familiarity, no physical comfort, and no assumption of compatibility. Scene Setting and Example Message may use immediate surroundings, work, weather, small observations, practical needs, simple curiosity, or a transactional reason to speak. Avoid "you understand", "I can trust you", "I've been waiting for someone like you", "we can figure this out together", private confessions, pet names, and trauma disclosure. Keep the Kin polite, curious, reserved, professional, guarded, or cautiously friendly.
 - Strangers means stranger to the Kin, not stranger to the town. Do not call the user "new here", "new in town", "newcomer", or imply they lack local knowledge unless the user explicitly supplied that fact.
 - For Strangers, preserve physical boundaries. Do not place the user inside the Kin's private home, bedroom, RV, vehicle interior, apartment, private office, back room, or other personal space unless a supplied role gives permission or the scene establishes a public/professional reason. Prefer exterior, threshold, counter, lobby, mechanic's yard, parking lot, sidewalk, diner, shop front, campground office, tow office, service window, or another public/shared space.
 - For Strangers, do not ask the user to solve specialized technical, medical, legal, investigative, mechanical, or intimate problems unless the scene first establishes the user as an appropriate worker or witness. Prefer stranger-appropriate asks: "Do you know if the shop is still open?", "Did you see who moved this?", "Is there a parts store nearby?", "Are you waiting for the mechanic too?", "Can you step back from the leak for a second?", or "Do you know who owns this lot?"
@@ -134,12 +137,12 @@ Relationship preset behavioral rules:
 - Romantic Interest: mutual attraction may exist. The Kin may flirt, tease, notice appearance, or show nervousness, but attraction does not equal established emotional intimacy, shared routines, or full trust.
 - Established relationships such as Exes and Old flame may reference history, unresolved tension, private shorthand, and known habits. Exes and old flames have familiarity but not automatic current trust. If an established current relationship is explicitly supplied in dynamic, then shared routines and comfortable communication are allowed.
 
-Before writing Opening Greeting and Example Message, run this validation internally: would someone in this relationship realistically say this during the first thirty seconds of this interaction? If not, rewrite. Use the coffee test: if two real people with this preset had just met or resumed contact over coffee, would the line sound believable? If not, reduce emotional intensity, reduce assumptions, and increase natural conversation. Conversation before character: the greeting exists to begin a believable interaction, not summarize the Kin's wound, arc, theme, core idea, attraction to the setting, hidden desire, or life philosophy.
-Knowledge continuity rule: Opening Greeting must not mix incompatible familiarity states. If the Kin is already performing a role for the user, has just completed a task for them, is inside/at their home through work, references their children, client account, shared schedule, prior appointment, or role-specific obligation, then the user already knows who the Kin is. Do not use first-introduction lines such as "Hi, I'm [Name]" in that situation. Use a handoff, update, reminder, or role-appropriate opening instead. Only introduce the Kin by name when the scene is genuinely a first meeting and no role-specific prior contact is implied.
+Before writing Scene Setting and Example Message, run this validation internally: would someone in this relationship realistically say this during the first thirty seconds of this interaction? If not, rewrite. Use the coffee test: if two real people with this preset had just met or resumed contact over coffee, would the line sound believable? If not, reduce emotional intensity, reduce assumptions, and increase natural conversation. Conversation before character: Scene Setting exists to begin a believable interaction, not summarize the Kin's wound, arc, theme, core idea, attraction to the setting, hidden desire, or life philosophy.
+Knowledge continuity rule: Scene Setting must not mix incompatible familiarity states. If the Kin is already performing a role for the user, has just completed a task for them, is inside/at their home through work, references their children, client account, shared schedule, prior appointment, or role-specific obligation, then the user already knows who the Kin is. Do not use first-introduction lines such as "Hi, I'm [Name]" in that situation. Use a handoff, update, reminder, or role-appropriate opening instead. Only introduce the Kin by name when the scene is genuinely a first meeting and no role-specific prior contact is implied.
 
-Use payload.tonePack as the prose texture across Tagline, Keywords, Story Premise, Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, Backstory, Key Memories, Example Message, Opening Greeting, and Player Relationship. If Infer, choose a fitting tone from the concept. Tone Pack controls sentence texture, imagery density, pacing, humor, and genre feel; it does not replace concrete character facts. Options may include Cinematic, Noir, Cozy, Gothic, Romance novel, Anime/shonen, Slice of life, Psychological drama, Urban fantasy, Dry comedy, or High tension thriller.
+Use payload.tonePack as the prose texture across Tagline, Keywords, Story Premise, Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, Personality, Key Memories, Example Message, Scene Setting, and Relationship Context. If Infer, choose a fitting tone from the concept. Tone Pack controls sentence texture, imagery density, pacing, humor, and genre feel; it does not replace concrete character facts. Options may include Cinematic, Noir, Cozy, Gothic, Romance novel, Anime/shonen, Slice of life, Psychological drama, Urban fantasy, Dry comedy, or High tension thriller.
 
-Use payload.storyIntensity as the world-pressure setting across occupation selection, environmental hazards, frequency of conflict, story hooks, daily challenges, Current, Opening Greeting, and Player Relationship. If Infer, choose the appropriate intensity from the concept. Story Intensity modifies circumstances, not personality or premise: it must not override MBTI, Tritype, core values, relationship style, behavioral tendencies, habits, decision-making style, moral edge, or the user's original source of conflict.
+Use payload.storyIntensity as the world-pressure setting across occupation selection, environmental hazards, frequency of conflict, story hooks, daily challenges, Current, Scene Setting, and Relationship Context. If Infer, choose the appropriate intensity from the concept. Story Intensity modifies circumstances, not personality or premise: it must not override MBTI, Tritype, core values, relationship style, behavioral tendencies, habits, decision-making style, moral edge, or the user's original source of conflict.
 Mild: prioritize realistic occupations and everyday life, such as gardener, apartment maintenance technician, librarian, bookstore owner, florist, mechanic, teacher, baker, or museum guide. Conflicts arise through work, relationships, community, customers, neighbors, money, schedules, and ordinary responsibility.
 Moderate: choose occupations that regularly encounter unusual situations without becoming action-oriented, such as private investigator, park ranger, journalist, veterinarian, hotel manager, harbor master, wildlife rehabilitator, or emergency dispatcher. Conflict is occasional but meaningful.
 High: prioritize occupations where danger, mystery, or conflict are expected parts of the profession, such as detective, federal agent, spy, treasure hunter, monster hunter, bounty hunter, military officer, smuggler, or professional thief. The environment may support frequent conflict and higher narrative stakes.
@@ -147,7 +150,7 @@ Design principle: a High intensity character should feel like the same person pl
 
 Use payload.appearance as the optional Kin Appearance module. Blank, AI, or Infer values mean the model may choose a fitting attribute. Random means choose a fresh plausible value for exploration. Any concrete value is locked and must be preserved exactly in Avatar Description, Portrait Prompt, Physical Description, and Face Detail where relevant. Locked appearance values override statistical defaults and aesthetic smoothing. Creative presentation fields such as clothing, pose, expression, lighting, and background may vary unless concrete values are supplied, but never contradict locked identity traits. Portrait Consistency controls strictness: Flexible allows more variation in hairstyle, clothing, expression, and lighting; Moderate balances variety with recognition; Strict should make prompts read like different photos of the same person. Facial Distinctiveness controls realism: higher values should add memorable believable features and avoid supermodel symmetry.
 
-Use payload.world as optional worldbuilding continuity. Treat it mostly as setting context and Journal Manager material, not as a replacement for the Kin's personality, occupation, relationship, or original premise. World Type, Era, Rules, Creatures, Factions, People, Places, Conflicts, and Notes should shape Local Knowledge, Texture, Story Premise context, gallery prompts, and inferred World/People/Places journals. Do not force every world detail into Backstory. If payload.world has concrete facts, preserve them and create practical recall-worthy facts from them: laws, local rules, institutions, recurring places, named people, factions, dangers, taboos, travel limits, supernatural constraints, technology limits, or social customs. Keep the Kin grounded as a person living in that world rather than making them an encyclopedia of the setting.
+Use payload.world as optional worldbuilding continuity. Treat it mostly as setting context and Journal Manager material, not as a replacement for the Kin's personality, occupation, relationship, or original premise. World Type, Era, Rules, Creatures, Factions, People, Places, Conflicts, and Notes should shape Local Knowledge, Texture, Story Premise context, gallery prompts, and inferred World/People/Places journals. Do not force every world detail into Personality. If payload.world has concrete facts, preserve them and create practical recall-worthy facts from them: laws, local rules, institutions, recurring places, named people, factions, dangers, taboos, travel limits, supernatural constraints, technology limits, or social customs. Keep the Kin grounded as a person living in that world rather than making them an encyclopedia of the setting.
 
 Use payload.personalityModel as a layered personality architecture. Follow this hierarchy:
 1. Behavior: Big Five/OCEAN is primary. Openness, Conscientiousness, Extraversion, Agreeableness, and Emotional Stability drive Behavioral Tendencies, Daily Routine, Decision-Making Style, Speech Patterns, conflict resolution, social behavior, and observable habits.
@@ -164,20 +167,20 @@ If payload.lockedSections marks any section true, treat payload.existingSections
 
 MBTI and Tritype are advanced flavor layers, not the main personality engine. If MBTI or Tritype are supplied, synchronize them with Big Five, Enneagram, attachment, and alignment where possible. If there is tension, preserve the more behaviorally specific Big Five and explain the label as style, coping strategy, or social mask rather than overriding behavior.
 
-Use payload.chemistry, payload.moralEdge, and payload.dramaHeat as character-design temperature controls across Tagline, Keywords, Story Premise, Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, Backstory, Personality, Conflict, Intimacy, Key Memories, Example Message, Opening Greeting, Player Relationship, and Player Profile. Do not default every romance to slow burn. Chemistry may be fast-burn, volatile, established, physically direct but emotionally guarded, tender domestic, competitive, or slow depending on the setting and user choice. Use payload.intimacyOrientation as the Kin's broad attraction/orientation preference when supplied. Use payload.partnerStyle as broad partner behavior guidance. Use payload.powerLeaning as a general consensual intimacy posture (Dom, Dom-leaning, Switch, Sub-leaning, Sub), influencing initiative, responsiveness, teasing, negotiation, and confidence without turning it into explicit instructions. Do not morally sanitize every character. Moral edge may produce flawed, messy, selfish, jealous, manipulative-when-scared, self-destructive, morally gray, or villainously charming characters when requested. Drama heat controls how much contradiction, bad coping, stakes, secrets, urgency, and emotional volatility appear. Keep characters coherent and adult; keep intimacy consensual and do not turn flaws into instructions to harm the user.
+Use payload.chemistry, payload.moralEdge, and payload.dramaHeat as character-design temperature controls across Tagline, Keywords, Story Premise, Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, Personality, Conflict, Intimacy, Key Memories, Example Message, Scene Setting, Relationship Context, and User Persona. Do not default every romance to slow burn. Chemistry may be fast-burn, volatile, established, physically direct but emotionally guarded, tender domestic, competitive, or slow depending on the setting and user choice. Use payload.intimacyOrientation as the Kin's broad attraction/orientation preference when supplied. Use payload.partnerStyle as broad partner behavior guidance. Use payload.powerLeaning as a general consensual intimacy posture (Dom, Dom-leaning, Switch, Sub-leaning, Sub), influencing initiative, responsiveness, teasing, negotiation, and confidence without turning it into explicit instructions. Do not morally sanitize every character. Moral edge may produce flawed, messy, selfish, jealous, manipulative-when-scared, self-destructive, morally gray, or villainously charming characters when requested. Drama heat controls how much contradiction, bad coping, stakes, secrets, urgency, and emotional volatility appear. Keep characters coherent and adult; keep intimacy consensual and do not turn flaws into instructions to harm the user.
 
-Output exactly this structure, with every listed Kin heading present, no markdown fences, and no extra explanation. Use compact labels. Do not use leading hyphens, bullets, or decorative list markers. If payload.player.createCompatiblePlayer is true, add Player Profile as a final section after Gallery Prompt - Casual.
+Output exactly this structure, with every listed Kin heading present, no markdown fences, and no extra explanation. Use compact labels. Do not use leading hyphens, bullets, or decorative list markers. If payload.player.createCompatiblePlayer is true, add User Persona as a final section after Gallery Prompt - Casual. Do not output a populated Learned Context section.
 
-Journal entry rules: Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, and Local Knowledge are Kindroid journal entries. Write each entry in third person and keep it descriptive yet concise, like Backstory. Each journal entry must be under 450 characters. After each entry, generate its matching Keyphrases heading. Keyphrases are case-insensitive recall triggers, not descriptions: return 6-8 independent, natural, comma-separated single words likely to appear in the user's roleplay messages. Single words only. No multi-word phrases. Think like a search engine, not a writer. Before returning each trigger, ask: "Would a player plausibly type this exact word in dialogue or narration?" If no, replace it with a simpler word they would type. Prefer common nouns, verbs, places, objects, roles, and simple abstract triggers. Good examples: engine, repair, tools, trade, deal, supplies, roads, rumors, camp, home, trust, promise, risk, raiders, salvage, shortcuts, barter, journal, breathe. Avoid summarizing the journal, poetic labels, full sentences, hashtags, duplicate concepts, and heading-like phrases such as "trade negotiation", "information gathering", "prioritizes safety", "situational checks", "gear preparation", "route logging", "trading post", "first aid", "medical supplies", or "raider routes". Convert phrases to one useful word: "trading post" becomes "trade"; "first aid" becomes "aid"; "medical supplies" becomes "supplies"; "engine repairs" becomes "engine" or "repair".
+Journal entry rules: Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, and Local Knowledge are Kindroid journal entries. Write each entry in third person and keep it descriptive yet concise, like Personality. Each journal entry must be under 450 characters. After each entry, generate its matching Keyphrases heading. Keyphrases are case-insensitive recall triggers, not descriptions: return 6-8 independent, natural, comma-separated single words likely to appear in the user's roleplay messages. Single words only. No multi-word phrases. Think like a search engine, not a writer. Before returning each trigger, ask: "Would a player plausibly type this exact word in dialogue or narration?" If no, replace it with a simpler word they would type. Prefer common nouns, verbs, places, objects, roles, and simple abstract triggers. Good examples: engine, repair, tools, trade, deal, supplies, roads, rumors, camp, home, trust, promise, risk, raiders, salvage, shortcuts, barter, journal, breathe. Avoid summarizing the journal, poetic labels, full sentences, hashtags, duplicate concepts, and heading-like phrases such as "trade negotiation", "information gathering", "prioritizes safety", "situational checks", "gear preparation", "route logging", "trading post", "first aid", "medical supplies", or "raider routes". Convert phrases to one useful word: "trading post" becomes "trade"; "first aid" becomes "aid"; "medical supplies" becomes "supplies"; "engine repairs" becomes "engine" or "repair".
 
 Tagline
-Under 160 characters. One punchy line that sells the Kin's story promise. Concrete, evocative, no heading inside the body.
+At most 100 characters, including spaces and punctuation. One punchy line that sells the Kin's story promise. Concrete, evocative, no heading inside the body.
 
 Keywords
 Under 220 characters. Comma-separated tags only, no sentences. Choose 6-12 concise keywords that fit the Kin and story. Useful common tags include companion, roleplay, aotw, fantasy, romance, adventure, rpg, scenario, platonic, anime, utility, sci-fi, cute, shy, comedy, slow burn, sarcastic, wholesome, villain, mature, horror. These are examples, not a closed list; add specific tags when useful.
 
 Story Premise
-Under 900 characters. Write 2-3 short paragraphs orienting the user to the roleplay: who the Kin is in daily life, the concrete environment, the user's original source of conflict, the player's plausible point of contact, and the kinds of choices or scenes likely to follow. Preserve the user's premise; do not add a new inciting incident to make the roleplay start. Do not summarize Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, or Backstory. Refer to those only when one fact is essential to understand the premise. This is orientation, not in-character narration or trailer prose.
+Under 900 characters. Write 2-3 short paragraphs orienting the user to the roleplay: who the Kin is in daily life, the concrete environment, the user's original source of conflict, the player's plausible point of contact, and the kinds of choices or scenes likely to follow. Preserve the user's premise; do not add a new inciting incident to make the roleplay start. Do not summarize Behavioral Tendencies, Daily Routine, Contradictions, Decision-Making Style, Distinctive Habits, Local Knowledge, or Personality. Refer to those only when one fact is essential to understand the premise. This is orientation, not in-character narration or trailer prose.
 
 Behavioral Tendencies
 Under 450 characters. Write in third person. Generate 3-5 specific recurring behaviors that affect decisions. Use observable actions only. Avoid emotional labels, diagnosis, archetype terms, and theme statements. Make these patterns predict future actions: how they verify information, handle promises, plan, delay, negotiate, react to danger, manage secrets, spend money, keep time, or take risks.
@@ -215,8 +218,8 @@ Under 450 characters. Write in third person. Generate 3-5 actionable facts the c
 Local Knowledge Keyphrases
 6-8 comma-separated recall triggers only. Use common words and short phrases a player might type, with synonyms and independent retrieval paths.
 
-*Backstory*
-Total Backstory must be under 2300 characters after headings and line breaks. Personality Framework is required. If space is tight, shorten Texture, Likes, Dislikes, Aesthetic, Fast Facts, and Speech Patterns before cutting Personality Framework, Core Identity, Conflict, Dynamic, or Current.
+*Personality*
+This is the rich internal Personality model, before a separate compact serialization pass. Build nuanced observable behavior and causal psychology in ordinary prose, up to 4500 characters; do not start in shorthand. Personality defines stable identity, behavior, motivation, routines, relationship tendencies, flaws, preferences, current life structure, and lasting consequences. Concrete events belong in Key Memories, specialized factual knowledge in journals/Local Knowledge, and the immediate opening action in Scene Setting. Avoid repeating those details here; retain the behavioral consequences. NOW/Current is the current chapter of life, not the current moment. Behavior has higher priority than framework labels.
 Core Identity: Start with the actual chosen/supplied name and exact payload.age, then who they are. 2-4 sentences. <100-200 characters or less>. Rewrite and develop the core idea; do not quote it verbatim. Ground identity in role, routine, situation, responsibility, occupation, or daily life.
 Occupation: Include only when payload.occupation, coreIdea, or completionBrief supplies/inferably requires a primary role. Preserve the role exactly enough to be recognizable <60-140 characters>.
 Secondary Work: Include only when payload.secondaryOccupation, coreIdea, intimacy, or completionBrief supplies/inferably requires side work, hidden work, sex work, volunteer duty, family labor, or a second job <60-150 characters>.
@@ -232,30 +235,31 @@ Dislikes: 2-3 tangible personal dislikes in one compact sentence. Use noises, li
 Aesthetic: Clothing choices and style <100-150 characters>
 Fast Facts: 2-3 grounding details not used elsewhere, such as an unrelated hobby, practical skill, minor relationship, possession, physical limitation, or reputation detail <100-150 characters>
 Speech Patterns: <100-150 characters>
-Personality Framework: Compact trait anchors near the end of Backstory <180-280 characters>. Use this format with only resolved values: Big Five O#/C#/E#/A#/S#; Enneagram #w# if resolved; Attachment if resolved; Trauma Response if supplied; Alignment if resolved; MBTI as flavor if resolved; Tritype if supplied. Never include the literal word Infer in this line. This reinforces personality settings without replacing narrative prose.
-Current: 1-2 short sentences containing only what they are doing today, any minor immediate pressure, and their next intended action. Prefer working, traveling, unpacking, renovating, taking temporary work, visiting family, exploring a town, settling into a routine, or deciding whether to stay or leave. Avoid manufacturing crisis language such as "must solve this before sunset", "everything changes tonight", "one last chance", "time is running out", or physical inability to leave unless supplied. Do not recap history, conflict themes, or the player relationship.
+Personality Framework: Compact trait anchors near the end of Personality <180-280 characters>. Use this format with only resolved values: Big Five O#/C#/E#/A#/S#; Enneagram #w# if resolved; Attachment if resolved; Trauma Response if supplied; Alignment if resolved; MBTI as flavor if resolved; Tritype if supplied. Never include the literal word Infer in this line. This reinforces personality settings without replacing narrative prose.
+Current: Describe the stable starting chapter of their life, such as a temporary posting, vacation, ongoing studies, renovation, or voluntary stay. This becomes NOW in the compact output. Do not describe the exact opening activity, moment, immediate task, or position in a room; Scene Setting owns those. Do not manufacture emergencies, repeat history, or predetermine a future relationship arc.
 
 *Response Directive*
 Under 250 characters. Focus on formatting and tone, including Tone Pack when supplied. Keep it simple. Include: avoid "object + abstract emotion" constructions. Include a compact Avoid clause only if boundaries are supplied.
 
 *Key Memories*
+The complete body, including titles and line breaks, must fit within 900 characters. Aim for 750-820 characters total. Balance the budget across all five entries. Each memory must end with a complete sentence; shorten wording across the set instead of cutting off the last entry. Preserve all five events and their important facts.
 Write exactly five memory lines. Each line must use a specific custom title before the colon, not generic labels like "The wound", "The dream", "The complication", "For fun", "KinForge choice", or KM1. Each memory should be a concrete moment, decision, repeated habit, responsibility, or event from the character's life; avoid metaphorical titles and abstract emotional summaries. The five memories should still cover: source of conflict, reason they want what they want, why things are messier than they seem, a personality/detail hook, and one extra hook shaped by Chemistry, Moral Edge, or Drama Heat. Example label style: My invisibility: At twelve, she stopped raising her hand after her father praised someone else for her idea.
 
 *Example Message*
-Under 700 characters. Write this section BEFORE Opening Greeting and use it as the Kin's compact voice and behavior seed. It is more than formatting; it teaches tone, speech style, message length, escalation rules, relationship logic, and sample delivery.
+Under 700 characters. Write this section BEFORE Scene Setting and use it as the Kin's compact voice and behavior seed. It is more than formatting; it teaches tone, speech style, message length, escalation rules, relationship logic, and sample delivery.
 Required format:
 #Tone: concise tone phrase
 #Speech: conversational/direct/etc.; include any no-euphemism/no-poetry/no-sermonizing style rule when relevant
 #Length: preferred reply range, such as 1-3 paragraphs, 350-900 characters, medium sentences
 #Rules: 3-5 compact behavior rules separated by semicolons
 Then include one short in-character sample with *action* and quoted dialogue.
-Rules must obey payload.relationshipPreset, Chemistry, Moral Edge, Drama Heat, Intimacy, and boundaries. For Strangers, rules must prevent trust claims, shared-history assumptions, pet names, private confessions, instant teamwork, and emotional overexposure. For established ties, rules may define familiarity, affection, teasing, conflict repair, escalation after consent, or what they prioritize before logistics. The Kindroid speaks and acts for themself, never for the user. Do not use this section to summarize backstory.
+Rules must obey payload.relationshipPreset, Chemistry, Moral Edge, Drama Heat, Intimacy, and boundaries. For Strangers, rules must prevent trust claims, shared-history assumptions, pet names, private confessions, instant teamwork, and emotional overexposure. For established ties, rules may define familiarity, affection, teasing, conflict repair, escalation after consent, or what they prioritize before logistics. The Kindroid speaks and acts for themself, never for the user. Do not use this section to summarize Personality or Key Memories.
 
-Opening Greeting
+Scene Setting
 Write the actual first message under 850 characters, ideally 450-750. Generate it AFTER Example Message and make it obey the Example Message #Tone, #Speech, #Length, and #Rules. Do not pad to hit the range; stop when the scene hook is complete. Use 2-3 compact paragraphs. Use third-person action narration in *asterisks*. Use quoted dialogue for spoken words. Do not include inner thoughts unless spoken aloud. Start in-scene with grounded sensory detail, visible action, a low-escalation practical hook, and a relationship-appropriate reason for the player to respond. Let Drama Heat affect event tension, not instant intimacy or new emergencies. Let Chemistry affect distance, directness, restraint, or charge without violating the relationship preset. Let Tone Pack shape prose style without making dialogue literary or adding plot events. The Kindroid may act and speak for themself, but never speaks or acts for the player. Do not let the character describe the premise, core idea, theme, wound, trauma, life philosophy, relationship arc, or what the scene means to them. Avoid contradictions where a character says they are not ready to admit something while admitting it. Prefer concrete lines someone would actually say during an ordinary interaction. End with a clear concrete invitation, question, or decision point for the player. Before finalizing, check whether the Kin is acting competent in areas their profile says they know and whether the opening preserved the user's premise. For Strangers, the Kin should speak as if this is a first meeting: no trust claims, no shared-history language, no emotional confession, no "you understand", no assumption that they are now a team, and no request for specialized help unless the user is established as qualified. Strangers are strangers to the Kin, not automatically new to town; do not say or imply the user is new here unless supplied. Keep the location public, exterior, or at a threshold, not inside the Kin's private RV/home/room/vehicle. Ask for local information, witness information, distance/safety, a routine recommendation, or a simple practical favor instead. Do not introduce vehicle breakdowns, murders, emergencies, disasters, betrayals, or forced deadlines unless supplied.
 
-Player Relationship
-Under 350 characters. Write 1-2 sentences defining how the player knows the Kin and what reply angle the opening gives them. This is for the user, not in-character narration. Be concrete: old friend, rival, client, partner, stranger with leverage, ex, witness, recruit, protector, etc. Do not speak for the player.
+Relationship Context
+Under 350 characters. Write 1-2 sentences defining how the user persona knows the Kin and what reply angle the Scene Setting gives them. This is for the user, not in-character narration. Be concrete: old friend, rival, client, partner, stranger with leverage, ex, witness, recruit, protector, etc. Do not speak for the user.
 
 Avatar Description (AD)
 Age:
@@ -282,22 +286,22 @@ Face Detail
 Write the actual face detail under 180 characters. Face-only visual facts: face shape, eye color/shape, brows, nose, lips, jaw, cheekbones, skin texture, scars, freckles, birthmarks, glasses, or facial hair only if visible/present. Do not mention absent traits. No emotions, mood, metaphor, ellipses, or clothing.
 
 Gallery Prompt - Dinner
-Under 450 characters. Write a reusable image prompt for a dinner or meal scene that blends into the Kin's backstory, routine, occupation, local setting, and aesthetic. Include stable identity traits from Avatar/Physical Description, clothing appropriate to the scene, meal/table/environment details, and one story-relevant object. No extra people unless role/context requires them. No text, captions, UI, or watermark.
+Under 450 characters. Write a reusable image prompt for a dinner or meal scene that blends into the Kin's Personality, routine, occupation, local setting, and aesthetic. Include stable identity traits from Avatar/Physical Description, clothing appropriate to the scene, meal/table/environment details, and one story-relevant object. No extra people unless role/context requires them. No text, captions, UI, or watermark.
 
 Gallery Prompt - Outdoor
 Under 450 characters. Write a reusable outdoor scene prompt that fits the Kin's actual life: camping, hiking, swimming, beach, park, street errand, campus path, work route, or another believable outdoor setting. Include stable identity traits, practical clothing/swimwear/outdoor wear as appropriate, environment, lighting, and story-relevant activity. No text, captions, UI, or watermark.
 
 Gallery Prompt - Intimate
-Under 450 characters. Write a non-nude intimate image prompt for an adult Kin. Use dim or soft light, private room, tasteful lingerie, robe, sleepwear, fitted lounge clothes, or other non-nude attire. Sensual but not explicit. No nudity, exposed genitals, explicit sex act, or minors. Preserve identity traits and backstory context without adding another person unless explicitly supplied.
+Under 450 characters. Write a non-nude intimate image prompt for an adult Kin. Use dim or soft light, private room, tasteful lingerie, robe, sleepwear, fitted lounge clothes, or other non-nude attire. Sensual but not explicit. No nudity, exposed genitals, explicit sex act, or minors. Preserve identity traits and Personality context without adding another person unless explicitly supplied.
 
 Gallery Prompt - Public
 Under 450 characters. Write a public scene prompt in a believable place tied to work, routine, education, errands, or local knowledge: cafe, street, shop, campus, workplace, lobby, library, event, market, transit stop, or similar. Include stable identity traits, public-appropriate clothing, candid scene activity, environment, and lighting. No text, captions, UI, or watermark.
 
 Gallery Prompt - Casual
-Under 450 characters. Write a casual downtime prompt: sitting at home, couch, desk, kitchen table, porch, bed fully clothed, floor cushions, coffee, phone, music, chores, book, studying, or other backstory-fitting rest. Include stable identity traits, comfortable clothing, room details, one story-relevant object, and natural light. No text, captions, UI, or watermark.
+Under 450 characters. Write a casual downtime prompt: sitting at home, couch, desk, kitchen table, porch, bed fully clothed, floor cushions, coffee, phone, music, chores, book, studying, or other Personality-fitting rest. Include stable identity traits, comfortable clothing, room details, one story-relevant object, and natural light. No text, captions, UI, or watermark.
 
-Player Profile
-Only include this section if payload.player.createCompatiblePlayer is true. Write a compact bio under 450 characters for the user/player character, using payload.player name, age, gender, ethnicity, and notes when supplied. Make the player compatible with the Kin's backstory, wound, dream, and dynamic. Do not overwrite the user's identity; build around supplied fields.
+User Persona
+Only include this section if payload.player.createCompatiblePlayer is true. Write a compact bio under 450 characters for the user/player character, using payload.player name, age, gender, ethnicity, and notes when supplied. Make the user persona compatible with the Kin's Personality, Key Memories, and relationship context. Do not overwrite the user's identity; build around supplied fields.
 
 Avoid metaphors. Be friendly, short, direct, culturally savvy, and genre savvy. Do not speak for the user.`;
 
@@ -370,73 +374,6 @@ async function readRequestBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   return Buffer.concat(chunks).toString("utf8");
-}
-
-function localSecretKey() {
-  const username = (() => {
-    try {
-      return os.userInfo().username;
-    } catch {
-      return process.env.USERNAME || process.env.USER || "local-user";
-    }
-  })();
-  const material = [
-    "KinForge local API secret v1",
-    os.hostname(),
-    username,
-    process.env.USERPROFILE || process.env.HOME || "",
-  ].join("|");
-  return crypto.createHash("sha256").update(material).digest();
-}
-
-function encryptLocalSecret(value, purpose = "localSecret") {
-  const clean = String(value || "");
-  if (!clean) {
-    const error = new Error("No secret value supplied");
-    error.status = 400;
-    throw error;
-  }
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", localSecretKey(), iv);
-  cipher.setAAD(Buffer.from(String(purpose || "localSecret"), "utf8"));
-  const encrypted = Buffer.concat([cipher.update(clean, "utf8"), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return {
-    v: 1,
-    alg: "aes-256-gcm",
-    purpose,
-    iv: iv.toString("base64"),
-    tag: tag.toString("base64"),
-    data: encrypted.toString("base64"),
-    createdAt: new Date().toISOString(),
-  };
-}
-
-function decryptLocalSecret(blob, purpose = "localSecret") {
-  if (!blob || blob.v !== 1 || blob.alg !== "aes-256-gcm") {
-    const error = new Error("Unsupported local secret format");
-    error.status = 400;
-    throw error;
-  }
-  const expectedPurpose = String(purpose || "localSecret");
-  if (String(blob.purpose || "") !== expectedPurpose) {
-    const error = new Error("Local secret purpose mismatch");
-    error.status = 400;
-    throw error;
-  }
-  try {
-    const decipher = crypto.createDecipheriv("aes-256-gcm", localSecretKey(), Buffer.from(blob.iv, "base64"));
-    decipher.setAAD(Buffer.from(expectedPurpose, "utf8"));
-    decipher.setAuthTag(Buffer.from(blob.tag, "base64"));
-    return Buffer.concat([
-      decipher.update(Buffer.from(blob.data, "base64")),
-      decipher.final(),
-    ]).toString("utf8");
-  } catch {
-    const error = new Error("Unable to unlock local secret on this Windows user/profile");
-    error.status = 400;
-    throw error;
-  }
 }
 
 function sanitizeKindroidPayload(payload = {}) {
@@ -659,18 +596,25 @@ async function getKindroidChatMessages({ apiKey, aiId, groupId, limit = 50, star
 
 async function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const requested = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
-  const filePath = path.normalize(path.join(ROOT, requested));
-
-  if (!filePath.startsWith(ROOT)) {
+  let requested;
+  try {
+    requested = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+  } catch {
+    res.writeHead(400);
+    res.end("Invalid URL");
+    return;
+  }
+  const publicFiles = new Set(["/index.html", "/src/styles.css", "/src/compact-personality.js", "/src/fflate.js", "/src/kin-bundle.js", "/src/app.bundle.js"]);
+  if (!publicFiles.has(requested)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
   }
+  const filePath = path.join(ROOT, requested);
 
   try {
     const data = await fs.readFile(filePath);
-    res.writeHead(200, { "Content-Type": mimeTypes[path.extname(filePath)] || "application/octet-stream" });
+    res.writeHead(200, { "Content-Type": mimeTypes[path.extname(filePath)] || "application/octet-stream", "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff" });
     res.end(data);
   } catch {
     res.writeHead(404);
@@ -883,6 +827,12 @@ async function postOpenAiResponse(requestBody, selectedModel, fallbackModel = MO
       errorType: data?.error?.type || "",
       errorMessage: data?.error?.message || "",
     });
+    if (response.ok && data.status && data.status !== "completed") {
+      const error = new Error(`AI response did not complete (${data.incomplete_details?.reason || data.status}). Previous output was preserved; retry generation.`);
+      error.status = 502;
+      error.details = { code: "incomplete_response", model, responseStatus: data.status, reason: data.incomplete_details?.reason || "" };
+      throw error;
+    }
     return { response, data, model };
   };
 
@@ -902,6 +852,56 @@ async function postOpenAiResponse(requestBody, selectedModel, fallbackModel = MO
   return result;
 }
 
+async function serializePersonality(richPersonality, context, model, options = {}) {
+  const { response, data, model: usedModel } = await postOpenAiResponse({
+    instructions: personalitySerialization.instructions,
+    input: JSON.stringify({ richPersonality, context, allowRouting: options.allowRouting !== false }),
+    max_output_tokens: 4500,
+  }, model);
+  if (!response.ok) throwOpenAiError(data, "Personality serialization failed", response.status);
+  const raw = getOutputText(data);
+  if (!raw) throwEmptyOpenAiError(data, "Personality serialization returned no output");
+  const semanticModel = parseJsonObject(raw, "Personality Serialization");
+  const source = context.generator || {};
+  const world = source.creationType === "World / NPC Ensemble";
+  const multi = source.creationType === "Multi-Character Kin";
+  const identity = world || multi ? { Name: source.kindroidName } : {
+    Name: source.kindroidName, Age: source.age, Gender: source.gender, Species: source.species,
+    Role: source.occupation, SideWork: source.secondaryOccupation, Edu: source.education,
+  };
+  const serialized = personalitySerialization.finalize(semanticModel, identity, options.max || 2300);
+  const journals = semanticModel.journals || [];
+  if (!Array.isArray(journals)) throw new Error("Invalid serialized journal entries");
+  for (const entry of journals) {
+    if (!entry.title || typeof entry.body !== "string" || !entry.body.trim() || entry.body.length > 450 || !Array.isArray(entry.keywords) || entry.keywords.length < 6 || entry.keywords.length > 8 || entry.keywords.some(word => typeof word !== "string" || !/^[\p{L}\p{N}]+$/u.test(word)) || new Set(entry.keywords.map(word => word.toLowerCase())).size !== entry.keywords.length) {
+      throw new Error("Personality serialization returned an invalid journal. Retry generation.");
+    }
+  }
+  if (options.allowRouting === false && (semanticModel.keyMemories || journals.length)) throw new Error("A Personality reroll cannot modify other sections.");
+  if (semanticModel.keyMemories) {
+    if (source.lockedSections?.kms) throw new Error("Personality serialization tried to change locked memories.");
+    if (typeof semanticModel.keyMemories !== "string") throw new Error("Serialized Key Memories must be text.");
+  }
+  return {
+    text: serialized.text, keyMemories: semanticModel.keyMemories || null, journals,
+    construction: { version: 1, richPersonality, units: semanticModel.units, conceptLedger: semanticModel.conceptLedger, omitted: serialized.omitted, sourceCharacters: richPersonality.length, finalCharacters: serialized.text.length, model: usedModel },
+  };
+}
+
+async function fitGeneratedMemories(text, model) {
+  return fitKeyMemories(text, async details => {
+    const { response, data } = await postOpenAiResponse({
+      instructions: "Edit these Key Memories to fit their character budget. Return only five titled memory lines, no heading or commentary. Preserve every original event, specific title, names, relationship facts and causal meaning; do not invent or merge memories. Use complete concise sentences with terminal punctuation. Rebalance wording across all five entries, never truncate a line or add ellipses. Target 750-820 characters total and never exceed 900, counting titles, spaces, punctuation and line breaks. The original is the source of truth; candidate is the previous attempt to improve.",
+      input: JSON.stringify(details),
+      max_output_tokens: 1500,
+    }, model);
+    if (!response.ok) throwOpenAiError(data, "Key Memories size adjustment failed", response.status);
+    const output = getOutputText(data);
+    if (!output) throwEmptyOpenAiError(data, "Key Memories adjustment returned no text");
+    return output;
+  });
+}
+
 async function generateKindroid(payload, model = resolveTextModel(payload, "fullGeneration")) {
   if (!OPENAI_API_KEY) {
     const error = new Error("Missing OPENAI_API_KEY");
@@ -912,7 +912,7 @@ async function generateKindroid(payload, model = resolveTextModel(payload, "full
   const { response, data, model: usedModel } = await postOpenAiResponse({
     instructions: KINFORGE_INSTRUCTIONS,
     input: `Generate one complete Kindroid from this JSON payload:\n${JSON.stringify(payload, null, 2)}`,
-    max_output_tokens: 3200,
+    max_output_tokens: 8000,
   }, model);
   payload.__usedModel = usedModel;
   if (!response.ok) {
@@ -924,7 +924,34 @@ async function generateKindroid(payload, model = resolveTextModel(payload, "full
     throwEmptyOpenAiError(data, "OpenAI returned an empty response");
   }
 
-  return output;
+  const requiredSections = ["Personality", "Response Directive", "Key Memories", "Example Message", "Scene Setting", "Relationship Context", "Avatar Description"];
+  if (payload.player?.createCompatiblePlayer) requiredSections.push("User Persona");
+  const sectionKeys = { Personality: "backstory", "Response Directive": "rd", "Key Memories": "kms", "Example Message": "example", "Scene Setting": "opening", "Relationship Context": "relationship", "Avatar Description": "avatar", "User Persona": "player" };
+  const missing = requiredSections.filter(label => {
+    const key = sectionKeys[label];
+    if (payload.lockedSections?.[key] && Object.hasOwn(payload.existingSections || {}, key)) return false;
+    return !new RegExp(`^[ \\t]*\\*{0,2}${label}(?:[ \\t]*\\(AD\\))?\\*{0,2}:?[ \\t]*\\r?$`, "im").test(output);
+  });
+  if (missing.length) {
+    const error = new Error(`AI generation omitted required sections: ${missing.join(", ")}. Retry generation.`);
+    error.status = 502;
+    error.details = { code: "missing_sections", missing };
+    throw error;
+  }
+  let finalOutput = output;
+  if (!payload.lockedSections?.backstory) {
+    const richPersonality = personalitySerialization.sectionBody(output, "Personality");
+    const serialized = await serializePersonality(richPersonality, { generator: payload, richOutput: output }, usedModel);
+    payload.__personalityConstruction = serialized.construction;
+    payload.__journalEntries = serialized.journals;
+    finalOutput = personalitySerialization.replaceSection(output, "Personality", serialized.text);
+    if (serialized.keyMemories) finalOutput = personalitySerialization.replaceSection(finalOutput, "Key Memories", serialized.keyMemories);
+  }
+  if (!payload.lockedSections?.kms) {
+    const memories = await fitGeneratedMemories(personalitySerialization.sectionBody(finalOutput, "Key Memories"), usedModel);
+    finalOutput = personalitySerialization.replaceSection(finalOutput, "Key Memories", memories);
+  }
+  return finalOutput;
 }
 
 async function rerollSection(payload, model = resolveTextModel(payload, "reroll")) {
@@ -950,7 +977,7 @@ ${pairedKeyphrasesLabel}
 
 Reroll task: Rewrite only the requested section. ${rerollFormat} Preserve continuity with the existing profile and the user's original premise, but make this section meaningfully different from the current version. Treat the generator payload as raw source material and do not echo its wording. Do not add a new major inciting incident, emergency, physical trap, betrayal, disaster, crime, or forced deadline unless supplied. Compare the new section against every existing section: do not reuse a major concept already present twice, and prefer details not yet used anywhere in the profile. Make the requested section answer only its assigned question. Stay under the requested character limit.
 
-For Avatar, Portrait Prompt, Physical Description, and Face Detail, use concrete physical description only and obey the no-clothing rules. For Gallery Prompt sections, preserve stable identity traits from Avatar/Physical Description and write scene image prompts with clothing, setting, activity, lighting, and story context; intimate gallery prompts must remain adult, non-nude, sensual but not explicit. For Example Message, use the #Tone/#Speech/#Length/#Rules/sample format and stay under 700 characters. For Opening Greeting, use existingSections.example as the voice contract when present; the greeting should sound like it follows the Example Message rules without repeating the sample. For Opening Greeting and Example Message, obey payload.relationshipPreset as a behavioral constraint. For Strangers, write as a first meeting with no trust claims, no shared-history language, no emotional confession, no "you understand", and no assumption that the user will help. Strangers are strangers to the Kin, not automatically new to town; do not call the user new here, new in town, or a newcomer unless supplied. Keep Stranger greetings in public/shared/threshold spaces, not inside the Kin's private RV, home, bedroom, apartment, vehicle interior, or back room. For Opening Greeting, stay under 850 characters, use clear *third-person action* and quoted dialogue; do not include inner thoughts or speak for the player. Start at the lowest believable conflict level: routine, minor inconvenience, practical question, or interesting interaction. Do not summarize the core idea, theme, hidden desire, trauma, life philosophy, or symbolic pull of the setting. Ban scripted self-analysis phrases such as "something about this place/town", "pulling me in", "not ready to admit", "maybe this is where I belong", or "I can finally tell someone"; replace with concrete ordinary circumstances and natural speech.`,
+For Avatar, Portrait Prompt, Physical Description, and Face Detail, use concrete physical description only and obey the no-clothing rules. For Gallery Prompt sections, preserve stable identity traits from Avatar/Physical Description and write scene image prompts with clothing, setting, activity, lighting, and story context; intimate gallery prompts must remain adult, non-nude, sensual but not explicit. For Example Message, use the #Tone/#Speech/#Length/#Rules/sample format and stay under 700 characters. For Scene Setting, use existingSections.example as the voice contract when present; the scene should sound like it follows the Example Message rules without repeating the sample. For Scene Setting and Example Message, obey payload.relationshipPreset as a behavioral constraint. For Strangers, write as a first meeting with no trust claims, no shared-history language, no emotional confession, no "you understand", and no assumption that the user will help. Strangers are strangers to the Kin, not automatically new to town; do not call the user new here, new in town, or a newcomer unless supplied. Keep Stranger scenes in public/shared/threshold spaces, not inside the Kin's private RV, home, bedroom, apartment, vehicle interior, or back room. For Scene Setting, stay under 850 characters, use clear *third-person action* and quoted dialogue; do not include inner thoughts or speak for the player. Start at the lowest believable conflict level: routine, minor inconvenience, practical question, or interesting interaction. Do not summarize the core idea, theme, hidden desire, trauma, life philosophy, or symbolic pull of the setting. Ban scripted self-analysis phrases such as "something about this place/town", "pulling me in", "not ready to admit", "maybe this is where I belong", or "I can finally tell someone"; replace with concrete ordinary circumstances and natural speech.`,
     input: `Reroll this section:
 Section: ${sectionLabel}
 Character limit: ${maxCharacters}
@@ -972,6 +999,12 @@ ${JSON.stringify(payload.sections || {}, null, 2)}`,
     throwEmptyOpenAiError(data, "OpenAI returned an empty reroll");
   }
 
+  if (["Personality", "Backstory"].includes(sectionLabel)) {
+    const serialized = await serializePersonality(output, { generator: payload.payload || {}, existingSections: payload.sections || {} }, usedModel, { allowRouting: false, max: maxCharacters });
+    payload.__personalityConstruction = serialized.construction;
+    return serialized.text;
+  }
+  if (sectionLabel === "Key Memories") return fitGeneratedMemories(output, usedModel);
   return output;
 }
 
@@ -1032,7 +1065,7 @@ async function generateSceneVariants(payload, model = resolveTextModel(payload, 
   const { response, data, model: usedModel } = await postOpenAiResponse({
     instructions: `${KINFORGE_INSTRUCTIONS}
 
-Scene variant task: Return only valid JSON with three alternate Opening Greeting bodies. Do not include section headings, markdown fences, commentary, or labels inside the strings.
+Scene variant task: Return only valid JSON with three alternate Scene Setting bodies. Do not include section headings, markdown fences, commentary, or labels inside the strings.
 
 Each variant must stay under 850 characters, ideally 450-750, but stop when the hook is complete. Use payload.existingSections.example as the voice contract when present; variants should follow its #Tone, #Speech, #Length, and #Rules without copying its sample. Use *third-person action narration* and quoted dialogue. Do not include inner thoughts unless spoken aloud. Never speak or act for the player. Preserve continuity with the existing profile, preserve the user's original premise, and obey all boundaries. Do not add a new major inciting incident, emergency, physical trap, vehicle breakdown, betrayal, disaster, crime, or forced deadline unless supplied. Obey payload.relationshipPreset as a behavioral constraint. For Strangers, write as a first meeting with no trust, no shared history, no emotional confession, no "you understand", no "I was hoping you would come", and no assumption that the user will help; use practical observation, immediate surroundings, work, or simple curiosity. Strangers are strangers to the Kin, not automatically new to town; do not call the user new here, new in town, or a newcomer unless supplied. Keep Stranger variants in public/shared/threshold spaces, not inside the Kin's private RV, home, bedroom, apartment, vehicle interior, or back room. If the scene references completed work for the user, the user's children, shared schedule, client account, prior appointment, or a handoff at the user's home, do not introduce the Kin by name as if unknown. Avoid scripted self-analysis, core-idea summaries, symbolic place attraction, and lines like "something about this town is pulling me in" or "I'm not ready to admit it"; use immediate facts and natural speech instead.
 
@@ -1072,7 +1105,7 @@ async function rewriteGreeting(payload, model = resolveTextModel(payload, "greet
   const { response, data, model: usedModel } = await postOpenAiResponse({
     instructions: `${KINFORGE_INSTRUCTIONS}
 
-Greeting Studio rewrite task: Return only valid JSON. Rewrite only the Opening Greeting. Do not include section headings, labels, markdown fences, commentary, or analysis.
+Scene Studio rewrite task: Return only valid JSON. Rewrite only the Scene Setting. Do not include section headings, labels, markdown fences, commentary, or analysis.
 
 Target style: obey payload.style. Studio brief: obey payload.brief unless it conflicts with relationship, continuity, boundaries, or character competence.
 
@@ -1099,7 +1132,7 @@ Rules:
 
 JSON shape:
 {
-  "greeting": "rewritten opening greeting only"
+  "greeting": "rewritten scene setting only"
 }`,
     input: `Rewrite the current greeting using this context:
 ${JSON.stringify(payload, null, 2)}`,
@@ -1125,15 +1158,15 @@ async function checkGreeting(payload, model = resolveTextModel(payload, "greetin
   }
 
   const { response, data, model: usedModel } = await postOpenAiResponse({
-    instructions: `KinForge Greeting Studio reviews one Opening Greeting for playability, continuity, and relationship realism.
+    instructions: `KinForge Scene Studio reviews one Scene Setting for playability, continuity, and relationship realism.
 
 Return only valid JSON. No markdown, commentary, or extra text.
 
-Do not rewrite the greeting. Identify concrete issues and concise repair guidance.
+Do not rewrite the scene setting. Identify concrete issues and concise repair guidance.
 
 Check for:
 - missing or weak Example Message voice seed when payload.existingSections.example lacks #Tone, #Speech, #Length, or #Rules
-- Opening Greeting contradicting the Example Message #Tone, #Speech, #Length, or #Rules
+- Scene Setting contradicting the Example Message #Tone, #Speech, #Length, or #Rules
 - over 850 characters
 - unclear action/dialogue separation
 - the Kin speaking or acting for the player
@@ -1178,7 +1211,7 @@ ${JSON.stringify(payload, null, 2)}`,
 
   const output = getOutputText(data);
   if (!output) throwEmptyOpenAiError(data, "OpenAI returned empty greeting check");
-  return parseJsonObject(output, "Greeting Studio Check");
+  return parseJsonObject(output, "Scene Studio Check");
 }
 
 async function checkContinuity(payload, model = resolveTextModel(payload, "continuity")) {
@@ -1197,10 +1230,10 @@ Do not rewrite the Kin. Do not invent new content. Report issues and suggested f
 
 Check for:
 - name, age, apparent age, gender, pronoun, orientation, and appearance mismatches
-- relationship preset violations, especially stranger greetings assuming trust, history, or instant teamwork
-- Example Message missing #Tone, #Speech, #Length, or #Rules, or Opening Greeting contradicting the Example Message voice contract
-- opening greeting contradictions, implausible competence failures, private-space issues, forced emergencies, or premise replacement
-- backstory/current/greeting conflicts
+- relationship preset violations, especially stranger scenes assuming trust, history, or instant teamwork
+- Example Message missing #Tone, #Speech, #Length, or #Rules, or Scene Setting contradicting the Example Message voice contract
+- Scene Setting contradictions, implausible competence failures, private-space issues, forced emergencies, or premise replacement
+- Personality/current/Scene Setting conflicts
 - repeated concepts across too many sections
 - user name mistakes such as User, Username, or User Name when a real userName is supplied
 - journal keyword issues, duplicates, multi-word keywords, collisions, or journals that do not match the profile
@@ -1221,7 +1254,7 @@ JSON shape:
   "issues": [
     {
       "severity": "high, medium, or low",
-      "area": "Identity, Relationship, Greeting, Journals, Appearance, Backstory, Player, Formatting, etc.",
+      "area": "Identity, Relationship, Scene, Journals, Appearance, Personality, User Persona, Formatting, etc.",
       "issue": "short issue title",
       "evidence": "specific text or fact that shows the problem",
       "suggestion": "specific repair guidance",
@@ -1385,11 +1418,11 @@ JSON shape:
   "issues": [
     {
       "severity": "high, medium, or low",
-      "area": "Chat, Relationship, Journals, Backstory, Memory, Scene, etc.",
+      "area": "Chat, Relationship, Journals, Personality, Memory, Scene, etc.",
       "issue": "short issue title",
       "evidence": "specific chat/profile evidence",
       "suggestion": "specific repair guidance",
-      "targetSection": "Journal Manager, Backstory, Key Memories, Player Relationship, etc."
+      "targetSection": "Journal Manager, Personality, Key Memories, Relationship Context, etc."
     }
   ],
   "notes": ["optional short notes"]
@@ -1753,7 +1786,7 @@ async function importKinText(payload, model = resolveTextModel(payload, "import"
 Return only valid JSON. No markdown, commentary, or extra text.
 
 Task:
-- Read the imported Kin text, which may contain Backstory, Response Directive, Key Memories, Example Message, Opening Greeting, Avatar Description, journals, image prompts, or loose notes.
+- Read the imported Kin text, which may contain Personality, Response Directive, Key Memories, Example Message, Scene Setting, Avatar Description, journals, image prompts, or loose notes.
 - Infer KinForge input fields from the text.
 - If Import Creation Type Hint is Single Character, World / NPC Ensemble, or Multi-Character Kin, set creationType to that exact value and interpret the import through that mode. Treat the hint as user intent, not a weak suggestion.
 - Preserve explicit facts. Infer likely settings only when strongly supported.
@@ -1867,6 +1900,16 @@ ${source}`;
 }
 
 const server = http.createServer(async (req, res) => {
+  const allowedHosts = new Set([`localhost:${PORT}`, `127.0.0.1:${PORT}`]);
+  const origin = req.headers.origin;
+  if (!allowedHosts.has(req.headers.host) || (origin && ![...allowedHosts].some(host => origin === `http://${host}`))) {
+    sendJson(res, 403, { error: "Only local KinForge requests are allowed." });
+    return;
+  }
+  if (req.method === "POST" && !/^application\/json\b/i.test(req.headers["content-type"] || "")) {
+    sendJson(res, 415, { error: "JSON requests are required." });
+    return;
+  }
   const requestStart = Date.now();
   const requestId = `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
   logEvent("request_start", {
@@ -1893,7 +1936,7 @@ const server = http.createServer(async (req, res) => {
       const payload = JSON.parse(body || "{}");
       const model = resolveTextModel(payload, "fullGeneration");
       const output = await generateKindroid(payload, model);
-      sendJson(res, 200, { output, model: payload.__usedModel || model });
+      sendJson(res, 200, { output, model: payload.__usedModel || model, personalityConstruction: payload.__personalityConstruction, journalEntries: payload.__journalEntries || [] });
     } catch (error) {
       console.error("OpenAI generation failed:", error.message || error);
       sendErrorJson(res, 500, "Generation failed", error);
@@ -1907,7 +1950,7 @@ const server = http.createServer(async (req, res) => {
       const payload = JSON.parse(body || "{}");
       const model = resolveTextModel(payload, "reroll");
       const section = await rerollSection(payload, model);
-      sendJson(res, 200, { section, model: payload.__usedModel || model });
+      sendJson(res, 200, { section, model: payload.__usedModel || model, personalityConstruction: payload.__personalityConstruction });
     } catch (error) {
       console.error("OpenAI section reroll failed:", error.message || error);
       sendErrorJson(res, 500, "Section reroll failed", error);
@@ -2059,7 +2102,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readRequestBody(req);
       const payload = JSON.parse(body || "{}");
-      const blob = encryptLocalSecret(payload.value, payload.purpose || "localSecret");
+      const blob = await encryptLocalSecret(payload.value, payload.purpose || "localSecret");
       sendJson(res, 200, { ok: true, blob });
     } catch (error) {
       console.error("Local secret encryption failed:", error.message || error);
@@ -2072,8 +2115,10 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readRequestBody(req);
       const payload = JSON.parse(body || "{}");
-      const value = decryptLocalSecret(payload.blob, payload.purpose || "localSecret");
-      sendJson(res, 200, { ok: true, value });
+      const value = await decryptLocalSecret(payload.blob, payload.purpose || "localSecret");
+      const upgradedBlob = payload.blob?.v === 1 ? await encryptLocalSecret(value, payload.purpose || "localSecret") : undefined;
+      res.setHeader("Cache-Control", "no-store");
+      sendJson(res, 200, { ok: true, value, upgradedBlob });
     } catch (error) {
       console.error("Local secret unlock failed:", error.message || error);
       sendErrorJson(res, error.status || 500, "Local secret unlock failed", error);
@@ -2182,7 +2227,7 @@ server.on("error", (error) => {
   console.error("KinForge server error:", error.message || error);
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "127.0.0.1", () => {
   logEvent("server_start", {
     port: PORT,
     defaultModel: MODEL,

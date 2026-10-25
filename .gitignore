@@ -1,0 +1,29 @@
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+*secrets*.json
+local.properties
+
+# Runtime diagnostics and personal character exports
+logs/
+*.log
+*.kin
+* - KinForge*.json
+* - KinForge*.txt
+exports/
+characters/
+saved-kins/
+changelistfromAI.txt
+
+# Dependencies, build output, and machine-specific editor files
+node_modules/
+.gradle/
+**/build/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

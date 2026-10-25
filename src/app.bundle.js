@@ -186,7 +186,7 @@ const outputSections = {
 };
 
 const sectionMeta = {
-  tagline: { label: "Tagline", max: 160 },
+  tagline: { label: "Tagline", max: 100 },
   keywords: { label: "Keywords", max: 220 },
   premise: { label: "Story Premise", max: 900 },
   behavior: { label: "Behavioral Tendencies", max: 450 },
@@ -201,12 +201,12 @@ const sectionMeta = {
   habitsKeyphrases: { label: "Distinctive Habits Keyphrases", max: 220 },
   localKnowledge: { label: "Local Knowledge", max: 450 },
   localKnowledgeKeyphrases: { label: "Local Knowledge Keyphrases", max: 220 },
-  backstory: { label: "Backstory", max: 2300 },
+  backstory: { label: "Personality", max: 2300 },
   rd: { label: "Response Directive", max: 250 },
   kms: { label: "Key Memories", max: 900 },
   example: { label: "Example Message", max: 700 },
-  opening: { label: "Opening Greeting", max: 850 },
-  relationship: { label: "Player Relationship", max: 350 },
+  opening: { label: "Scene Setting", max: 850 },
+  relationship: { label: "Relationship Context", max: 350 },
   avatar: { label: "Avatar Description", max: 600 },
   portrait: { label: "Portrait Prompt", max: 200 },
   physical: { label: "Physical Description", max: 520 },
@@ -216,7 +216,7 @@ const sectionMeta = {
   galleryIntimate: { label: "Gallery Prompt - Intimate", max: 450 },
   galleryPublic: { label: "Gallery Prompt - Public", max: 450 },
   galleryCasual: { label: "Gallery Prompt - Casual", max: 450 },
-  player: { label: "Player Profile", max: 450 },
+  player: { label: "User Persona", max: 450 },
 };
 
 const journalPairs = {
@@ -260,7 +260,8 @@ const generationSteps = [
 ];
 
 let progressTimer = null;
-const generationStepMs = 3400;
+const generationEstimatedMs = 90000;
+const generationStepMs = generationEstimatedMs / (generationSteps.length - 1);
 let lastApiErrorText = "";
 
 const journalConfig = {
@@ -281,7 +282,7 @@ const aiTaskConfig = [
   { key: "surprise", label: "Surprise Me", defaultTier: "balanced" },
   { key: "reroll", label: "Section Rerolls", defaultTier: "balanced" },
   { key: "field", label: "Field Regeneration", defaultTier: "fast" },
-  { key: "greeting", label: "Greeting Studio", defaultTier: "best" },
+  { key: "greeting", label: "Scene Studio", defaultTier: "best" },
   { key: "scene", label: "Scene Variants", defaultTier: "best" },
   { key: "journals", label: "Journals", defaultTier: "balanced" },
   { key: "names", label: "Names", defaultTier: "fast" },
@@ -580,22 +581,22 @@ const fieldHelpGuidance = {
   creationType: {
     title: "Creation Type",
     body: "Chooses the basic structure KinForge should build: one person, a whole world that portrays NPCs, or a small cast inside one Kindroid.",
-    affects: ["Backstory", "Response Directive", "Example Message", "Opening Greeting", "Player Relationship"],
+    affects: ["Personality", "Response Directive", "Example Message", "Scene Setting", "Relationship Context"],
   },
   ensembleMembers: {
     title: "Ensemble Members",
     body: "For Multi-Character Kin mode, describe up to three characters. Give each one a role, voice, relationship, and one visual or behavioral anchor.",
-    affects: ["Core Identity", "Backstory", "Example Message", "Opening Greeting", "Response Directive"],
+    affects: ["Core Identity", "Personality", "Example Message", "Scene Setting", "Response Directive"],
   },
   worldNarrationNotes: {
     title: "World / Narrator Instructions",
     body: "For World / NPC Ensemble mode, define how the Kin should narrate the setting, portray NPCs, manage scenes, and guide the player to make journals for important NPCs.",
-    affects: ["Story Premise", "Response Directive", "Example Message", "Opening Greeting", "Player Relationship", "Journals"],
+    affects: ["Story Premise", "Response Directive", "Example Message", "Scene Setting", "Relationship Context", "Journals"],
   },
   kindroidName: {
     title: "Kindroid Name",
     body: "Sets the character's actual name. If left blank, KinForge will infer or generate a name from age, gender, heritage, region, and concept.",
-    affects: ["Core Identity", "Backstory", "Avatar", "Opening Greeting", "saved filename"],
+    affects: ["Core Identity", "Personality", "Avatar", "Scene Setting", "saved filename"],
   },
   gender: {
     title: "Kindroid Gender",
@@ -605,12 +606,12 @@ const fieldHelpGuidance = {
   species: {
     title: "Species",
     body: "Defines the Kin's species, ancestry, or non-human identity. Use this for cat girls, goliaths, vampires, androids, fae, aliens, hybrids, or fantasy lineages.",
-    affects: ["Core Identity", "Backstory", "Avatar", "Portrait Prompt", "World journals"],
+    affects: ["Core Identity", "Personality", "Avatar", "Portrait Prompt", "World journals"],
   },
   age: {
     title: "Kindroid Age",
     body: "Sets chronological age. KinForge uses this for identity, naming era, life stage, schooling/work realism, and avatar description.",
-    affects: ["Core Identity", "name birth year", "Backstory", "Avatar"],
+    affects: ["Core Identity", "name birth year", "Personality", "Avatar"],
   },
   apparentAge: {
     title: "Apparent Age",
@@ -620,7 +621,7 @@ const fieldHelpGuidance = {
   currentCity: {
     title: "Current City",
     body: "The main city, town, district, settlement, or fictional location where the Kin currently lives or works. If blank, KinForge may invent one.",
-    affects: ["Story Premise", "Texture", "Local Knowledge", "Opening Greeting", "Gallery prompts"],
+    affects: ["Story Premise", "Texture", "Local Knowledge", "Scene Setting", "Gallery prompts"],
   },
   currentState: {
     title: "State / Region",
@@ -630,17 +631,17 @@ const fieldHelpGuidance = {
   currentCountry: {
     title: "Country",
     body: "Optional country or world region. This helps names, culture, institutions, weather, schooling, and local routines stay coherent.",
-    affects: ["Backstory", "Naming", "Local Knowledge", "Texture"],
+    affects: ["Personality", "Naming", "Local Knowledge", "Texture"],
   },
   coreIdea: {
     title: "Core Idea",
     body: "Raw concept material. KinForge should transform this into concrete identity, conflict, routine, and story logic instead of copying it directly.",
-    affects: ["Everything, especially Backstory, Premise, Current, and Greeting"],
+    affects: ["Everything, especially Personality, Premise, Current, and Scene Setting"],
   },
   occupation: {
     title: "Primary Occupation",
     body: "The character's main job, role, or daily work. This is a source-of-truth anchor, so KinForge should not replace it with a more generic job.",
-    affects: ["Core Identity", "Daily Routine", "Local Knowledge", "Opening Greeting"],
+    affects: ["Core Identity", "Daily Routine", "Local Knowledge", "Scene Setting"],
   },
   secondaryOccupation: {
     title: "Secondary / Secret Work",
@@ -650,7 +651,7 @@ const fieldHelpGuidance = {
   education: {
     title: "Education / Schooling",
     body: "School, training, apprenticeship, degree program, or self-taught background. Schooling is separate from occupation.",
-    affects: ["Backstory", "Daily Routine", "competence", "life stage"],
+    affects: ["Personality", "Daily Routine", "competence", "life stage"],
   },
   genre: {
     title: "Genre, Setting, Or Vibe",
@@ -660,12 +661,12 @@ const fieldHelpGuidance = {
   tonePack: {
     title: "Tone Pack",
     body: "Controls prose texture: sentence feel, imagery density, humor, pacing, and genre flavor. It should not change who the character is.",
-    affects: ["Backstory wording", "Example Message", "Opening Greeting", "Response Directive"],
+    affects: ["Personality wording", "Example Message", "Scene Setting", "Response Directive"],
   },
   storyIntensity: {
     title: "Story Intensity",
     body: "Controls how dramatic the character's world is. Mild is everyday pressure, Moderate adds unusual complications, High supports frequent danger or conflict.",
-    affects: ["Occupation pressure", "Current", "Premise", "Opening Greeting"],
+    affects: ["Occupation pressure", "Current", "Premise", "Scene Setting"],
   },
   worldType: {
     title: "World Type",
@@ -675,7 +676,7 @@ const fieldHelpGuidance = {
   worldEra: {
     title: "Time Period / Era",
     body: "Sets calendar feel, technology level, institutions, clothing assumptions, transport, slang, and what details would be normal.",
-    affects: ["World journals", "Local Knowledge", "Backstory context"],
+    affects: ["World journals", "Local Knowledge", "Personality context"],
   },
   worldRules: {
     title: "World Rules",
@@ -725,12 +726,12 @@ const fieldHelpGuidance = {
   dynamic: {
     title: "Dynamic With User",
     body: "Describes the relationship angle with the player. Use this for specific context that the preset alone cannot express.",
-    affects: ["Player Relationship", "Opening Greeting", "Example Message"],
+    affects: ["Relationship Context", "Scene Setting", "Example Message"],
   },
   relationshipPreset: {
     title: "Relationship Preset",
     body: "A behavioral constraint for what the Kin knows, assumes, and expresses toward the user at the start.",
-    affects: ["Opening Greeting", "Example Message", "trust level", "physical boundaries"],
+    affects: ["Scene Setting", "Example Message", "trust level", "physical boundaries"],
   },
   intimacy: {
     title: "Romance And Intimacy Notes",
@@ -765,7 +766,7 @@ const fieldHelpGuidance = {
   dramaHeat: {
     title: "Drama Heat",
     body: "Controls contradiction, urgency, secrets, stakes, and emotional volatility. It should raise pressure without breaking realism.",
-    affects: ["Conflict", "Current", "Opening Greeting", "Key Memories"],
+    affects: ["Conflict", "Current", "Scene Setting", "Key Memories"],
   },
   boundaries: {
     title: "Boundaries",
@@ -1908,6 +1909,7 @@ function setValue(id, text) {
   const max = Number(field.maxLength || -1);
   const next = String(text ?? "");
   field.value = max > 0 ? compact(next, max) : next;
+  updateFieldCharacterCount(field);
 }
 
 function fieldMeta(id) {
@@ -2006,6 +2008,10 @@ function addFieldEditingControls() {
 
 function normalizeSectionValue(sectionKey, text) {
   const max = sectionMeta[sectionKey]?.max;
+  if (sectionKey === "kms") return stripSectionLabel(text, sectionKey).trim();
+  if (sectionKey === "backstory" && CompactPersonality.parse(text).length) {
+    return CompactPersonality.serialize(CompactPersonality.parse(text), max).text;
+  }
   const cleaned = cleanFinalPlaceholderText(cleanGeneratedText(stripSectionLabel(text, sectionKey)));
   if (sectionKey === "opening" || sectionKey === "example") return compact(cleanFinalPlaceholderText(cleanGreetingText(stripSectionLabel(text, sectionKey))), max);
   if (sectionKey === "avatar") return compact(cleanAvatarDescription(cleaned), max);
@@ -2017,11 +2023,11 @@ function normalizeSectionValue(sectionKey, text) {
 }
 
 function ensureBackstoryPersonalityFramework(text, max = sectionMeta.backstory.max) {
-  const p = buildProfile();
-  const frameworkLine = `Personality Framework: ${buildPersonalityFramework(p)}`;
   let clean = String(text || "").trim();
-  if (!hasBackstorySubstance(clean)) clean = buildBackstoryBody(p);
-  clean = clean.replace(/(?:^|\n)\s*Personality Framework\s*:\s*[^\n]*/i, "").trim();
+  if (!clean) return "";
+  const existing = clean.match(/(?:^|\n)[ \t]*Personality Framework[ \t]*:[^\n]*/i);
+  const frameworkLine = existing?.[0].trim() || `Personality Framework: ${buildPersonalityFramework(buildProfile())}`;
+  clean = clean.replace(/(?:^|\n)[ \t]*Personality Framework[ \t]*:[^\n]*/i, "").trim();
   const currentMatch = clean.match(/(?:^|\n)\s*Current\s*:/i);
   if (currentMatch) {
     const index = currentMatch.index + (currentMatch[0].startsWith("\n") ? 1 : 0);
@@ -2034,13 +2040,6 @@ function ensureBackstoryPersonalityFramework(text, max = sectionMeta.backstory.m
   const reserved = frameworkLine.length + 2;
   const body = compact(withoutFramework, Math.max(0, max - reserved));
   return `${body}\n${frameworkLine}`.slice(0, max).trim();
-}
-
-function hasBackstorySubstance(text) {
-  const clean = String(text || "").trim();
-  if (clean.length < 260) return false;
-  const anchors = ["Core Identity", "Personality", "Conflict", "Dynamic", "Current"];
-  return anchors.filter((anchor) => new RegExp(`\\b${anchor}\\b\\s*:`, "i").test(clean)).length >= 3;
 }
 
 function currentUserName() {
@@ -2390,7 +2389,7 @@ function buildArchetype(p) {
 }
 
 function buildTagline(p) {
-  return compact(`${p.name}: ${buildArchetype(p)} in a ${p.tonePack.toLowerCase()} story of ${p.chemistry.toLowerCase()}, ${p.moralEdge.toLowerCase()} choices, and unfinished truth.`, 160);
+  return compact(`${p.name}: ${buildArchetype(p)} in a ${p.tonePack.toLowerCase()} story of ${p.chemistry.toLowerCase()}, ${p.moralEdge.toLowerCase()} choices, and unfinished truth.`, sectionMeta.tagline.max);
 }
 
 function buildKeywords(p) {
@@ -3711,15 +3710,15 @@ async function apiFetch(url, options = {}, operation = "API request") {
   }
 }
 
-async function generateKindroidWithAi() {
+async function generateKindroidWithAi(payload = buildGeneratorPayload()) {
   const response = await apiFetch("/api/generate-kindroid", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildGeneratorPayload({ includeContinuity: false })),
+    body: JSON.stringify(payload),
   }, "Generate Kindroid");
   const data = await readApiJson(response, "Generate Kindroid", "AI generation failed");
   if (!data.output) throw createApiError("AI generation returned no output", { operation: "Generate Kindroid" });
-  return { output: data.output, model: data.model || "OpenAI" };
+  return { output: data.output, model: data.model || "OpenAI", personalityConstruction: data.personalityConstruction, journalEntries: data.journalEntries || [] };
 }
 
 async function generateSurpriseWithAi() {
@@ -3786,7 +3785,7 @@ async function rerollSectionWithAi(sectionKey) {
   }, `Reroll ${sectionMeta[sectionKey]?.label || sectionKey}`);
   const data = await readApiJson(response, `Reroll ${sectionMeta[sectionKey]?.label || sectionKey}`, "Section reroll failed");
   if (!data.section) throw createApiError("Section reroll returned no text", { operation: "Reroll Section" });
-  return { section: data.section, model: data.model || "OpenAI" };
+  return { section: data.section, model: data.model || "OpenAI", personalityConstruction: data.personalityConstruction };
 }
 
 async function regenerateFieldWithAi(fieldId) {
@@ -3847,9 +3846,9 @@ async function rewriteGreetingWithAi() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(buildGreetingStudioPayload()),
-  }, "Greeting Studio Rewrite");
-  const data = await readApiJson(response, "Greeting Studio Rewrite", "Greeting rewrite failed");
-  if (!data.greeting) throw createApiError("Greeting rewrite returned no text", { operation: "Greeting Studio Rewrite" });
+  }, "Scene Studio Rewrite");
+  const data = await readApiJson(response, "Scene Studio Rewrite", "Scene rewrite failed");
+  if (!data.greeting) throw createApiError("Scene rewrite returned no text", { operation: "Scene Studio Rewrite" });
   return { greeting: data.greeting, model: data.model || "OpenAI" };
 }
 
@@ -3858,9 +3857,9 @@ async function checkGreetingWithAi() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(buildGreetingStudioPayload()),
-  }, "Greeting Studio Check");
-  const data = await readApiJson(response, "Greeting Studio Check", "Greeting check failed");
-  if (!data.report) throw createApiError("Greeting check returned no report", { operation: "Greeting Studio Check" });
+  }, "Scene Studio Check");
+  const data = await readApiJson(response, "Scene Studio Check", "Scene check failed");
+  if (!data.report) throw createApiError("Scene check returned no report", { operation: "Scene Studio Check" });
   return { report: data.report, model: data.model || "OpenAI" };
 }
 
@@ -3978,6 +3977,9 @@ async function decryptLocalSecret(blob, purpose = "localSecret") {
     body: JSON.stringify({ blob, purpose }),
   }, "Unlock Local Secret");
   const data = await readApiJson(response, "Unlock Local Secret", "Local secret unlock failed");
+  if (data.upgradedBlob && purpose === "kindroidApiKey") {
+    localStorage.setItem(kindroidApiKeyStorageKey, JSON.stringify(data.upgradedBlob));
+  }
   return data.value || "";
 }
 
@@ -4002,7 +4004,34 @@ function buildBackstoryBody(p) {
     `Personality Framework: ${buildPersonalityFramework(p)}`,
     `Current: ${compact(buildCurrent(p), 210)}`,
   ];
-  return compact(backstorySections.filter(Boolean).join("\n"), sectionMeta.backstory.max);
+  return backstorySections.filter(Boolean).join("\n");
+}
+
+function buildCompactFallbackPersonality(p, richPersonality) {
+  const units = [];
+  const add = (tag, values) => units.push({ tag, properties: Object.entries(values).filter(([, value]) => value && value !== "Infer").map(([key, value]) => ({ key, value })) });
+  const richLines = Object.fromEntries(richPersonality.split("\n").map(line => {
+    const colon = line.indexOf(":");
+    return [line.slice(0, colon), line.slice(colon + 1).trim()];
+  }));
+  const clauses = text => text.split(`${p.name} `).filter(Boolean).map(value => value.replace(/\.$/, "").trim());
+  if (isWorldKin(p) || isMultiCharacterKin(p)) {
+    add("ID", { Name: p.name, Role: p.creationType });
+    add("Beh", isWorldKin(p) ? { Narration: p.worldNarrationNotes || "Portray-world-and-NPCs|Preserve-player-agency", Knowledge: "Keep-NPC-knowledge-distinct" } : { Members: p.ensembleMembers, Voices: "Separate-speakers,motives,memories,boundaries" });
+  } else {
+    add("ID", { Name: p.name, Age: String(p.age), Gender: p.gender, Species: p.species, Home: p.currentLocation, Role: p.occupation, SideWork: p.secondaryOccupation, Edu: p.education });
+    add("P", { Core: p.personality, Drive: richLines.Conflict });
+    add("Beh", Object.fromEntries(clauses(buildBehavioralTendencies(p)).slice(0, 3).map((value, i) => [`Pattern${i + 1}`, value])));
+    add("Decide", Object.fromEntries(clauses(buildDecisionStyle(p)).slice(0, 2).map((value, i) => [`Method${i + 1}`, value])));
+  }
+  add("Rel", { [p.userName]: richLines[`Dynamic with ${p.userName}`] });
+  if (p.intimacy || (p.intimacyOrientation && p.intimacyOrientation !== "Infer")) add("Int", { Preferences: richLines.Intimacy });
+  add("Qrk", { Habit: clauses(buildDistinctiveHabits(p))[0] });
+  add("Voice", { Pattern: p.voice });
+  add("Likes", { Likes: richLines.Likes, Dislikes: richLines.Dislikes });
+  const framework = buildPersonalityFramework(p).replace(/^Big Five\s*/, "").replace(/Enneagram\s+/g, "").replace(/\s+attachment/g, "").replace(/MBTI\s+/g, "").replace(/\s+as flavor/g, "-flavor").replace(/Tritype\s+/g, "").replace(/\.$/, "");
+  units.push({ tag: "Framework", properties: framework.split(/;\s*/).map(value => ({ key: "", value })) });
+  return CompactPersonality.serialize(units, sectionMeta.backstory.max);
 }
 
 function generateKindroid() {
@@ -4016,7 +4045,10 @@ function generateKindroid() {
   const decision = `Decision-Making Style\n${buildDecisionStyle(p)}\n\nDecision-Making Style Keyphrases\n${buildJournalKeyphrases(p, "decision")}`;
   const habits = `Distinctive Habits\n${buildDistinctiveHabits(p)}\n\nDistinctive Habits Keyphrases\n${buildJournalKeyphrases(p, "habits")}`;
   const localKnowledge = `Local Knowledge\n${buildLocalKnowledge(p)}\n\nLocal Knowledge Keyphrases\n${buildJournalKeyphrases(p, "localKnowledge")}`;
-  const backstory = buildBackstoryBody(p);
+  const richPersonality = buildBackstoryBody(p);
+  const compactPersonality = buildCompactFallbackPersonality(p, richPersonality);
+  if (!isSectionLocked("backstory")) state.personalityConstruction = { version: 1, richPersonality, units: compactPersonality.units, omitted: compactPersonality.omitted, sourceCharacters: richPersonality.length, finalCharacters: compactPersonality.text.length, model: "offline" };
+  const backstory = `Personality\n${compactPersonality.text}`;
   const boundaryNote = p.boundaries ? ` Avoid: ${p.boundaries}.` : "";
   const rdBase = isWorldKin(p)
     ? `Portray the world, scene narration, and NPCs. Label NPC speakers clearly. Never act for ${p.userName}.`
@@ -4025,13 +4057,7 @@ function generateKindroid() {
       : `Speaks in medium sentences, 1-3 paragraphs, under 1200 characters. Use ${p.tonePack} tone. Show action through grounded detail. Avoid "object + abstract emotion" constructions.`;
   const rd = compact(`*Response Directive*\n${rdBase}${boundaryNote}`, 250);
   const fallbackMemories = buildFallbackMemories(p);
-  const kms = compact(
-    [
-      `*Key Memories*`,
-      ...fallbackMemories,
-    ].join("\n"),
-    900,
-  );
+  const kms = [`*Key Memories*`, ...fallbackMemories].join("\n");
   const relation = relationshipConstraint(p);
   const exampleRules = isWorldKin(p)
     ? `#Rules: act as narrator/world/NPCs; label every NPC speaker; reveal setting through action; prompt choices without choosing for ${p.userName}; advise creating journals for important NPCs`
@@ -4109,12 +4135,12 @@ function parseOutputSections(text) {
     ["habitsKeyphrases", /^\s*\*?Distinctive Habits Keyphrases\*?:?\s*$/im],
     ["localKnowledge", /^\s*\*?Local Knowledge\*?:?\s*$/im],
     ["localKnowledgeKeyphrases", /^\s*\*?Local Knowledge Keyphrases\*?:?\s*$/im],
-    ["backstory", /^\s*\*?Backstory\*?:?.*$/im],
+    ["backstory", /^[ \t]*\*{0,2}(?:Personality|Backstory)\*{0,2}:?[ \t]*\r?$/im],
     ["rd", /^\s*\*?Response Directive\*?:?.*$/im],
     ["kms", /^\s*\*?Key Memories\*?:?.*$/im],
     ["example", /^\s*\*?Example Message\*?:?.*$/im],
-    ["opening", /^\s*\*?Opening Greeting\*?:?.*$/im],
-    ["relationship", /^\s*\*?Player Relationship\*?:?.*$/im],
+    ["opening", /^\s*\*?(?:Scene Setting|Opening Greeting)\*?:?.*$/im],
+    ["relationship", /^\s*\*?(?:Relationship Context|Player Relationship)\*?:?.*$/im],
     ["avatar", /^\s*\*?Avatar Description(?:\s*\(AD\))?\*?:?.*$/im],
     ["portrait", /^\s*\*?Portrait Prompt\*?:?.*$/im],
     ["physical", /^\s*\*?Physical Description\*?:?.*$/im],
@@ -4124,7 +4150,7 @@ function parseOutputSections(text) {
     ["galleryIntimate", /^\s*\*?Gallery Prompt - Intimate\*?:?.*$/im],
     ["galleryPublic", /^\s*\*?Gallery Prompt - Public\*?:?.*$/im],
     ["galleryCasual", /^\s*\*?Gallery Prompt - Casual\*?:?.*$/im],
-    ["player", /^\s*\*?Player Profile\*?:?.*$/im],
+    ["player", /^\s*\*?(?:User Persona|Player Profile)\*?:?.*$/im],
   ]
     .map(([key, pattern]) => {
       const match = output.match(pattern);
@@ -4147,6 +4173,18 @@ function stripSectionLabel(text, sectionKey) {
   if (!label) return clean;
   if (sectionKey === "avatar") {
     clean = clean.replace(/^\s*\*?Avatar Description(?:\s*\(AD\))?\*?:?\s*/i, "");
+  }
+  if (sectionKey === "backstory") {
+    return clean.replace(/^[ \t]*\*{0,2}(?:Personality|Backstory)\*{0,2}:?[ \t]*(?:\r?\n|$)/i, "").trim();
+  }
+  if (sectionKey === "opening") {
+    clean = clean.replace(/^\s*\*?Opening Greeting\*?:?\s*/i, "");
+  }
+  if (sectionKey === "relationship") {
+    clean = clean.replace(/^\s*\*?Player Relationship\*?:?\s*/i, "");
+  }
+  if (sectionKey === "player") {
+    clean = clean.replace(/^\s*\*?Player Profile\*?:?\s*/i, "");
   }
   return clean
     .replace(new RegExp(`^\\s*\\*?${label}\\*?:?\\s*`, "i"), "")
@@ -4248,6 +4286,18 @@ function oneLine(text, max = 180) {
 
 function backstoryPart(backstory, label) {
   const source = String(backstory || "");
+  const stack = CompactPersonality.fields(source);
+  if (Object.keys(stack).length) {
+    const tagText = tag => Object.entries(stack[tag] || {}).map(([key, value]) => `${key}:${value}`).join("; ");
+    const values = {
+      "Core Identity": Object.values(stack.ID || {}).join(", "), Occupation: stack.ID?.Role,
+      "Secondary Work": stack.ID?.SideWork, Education: stack.ID?.Edu, Personality: tagText("P"),
+      Conflict: stack.P?.Drive || stack.P?.Flaw, Intimacy: tagText("Int"),
+      "Speech Patterns": tagText("Voice"), Current: tagText("NOW"), Likes: tagText("Likes"),
+    };
+    if (/^Dynamic/.test(label)) return tagText("Rel");
+    return values[label] || "";
+  }
   const labels = [
     "Core Identity",
     "Occupation",
@@ -4274,18 +4324,24 @@ function backstoryPart(backstory, label) {
 }
 
 function inferNameFromSections(sections) {
+  const name = CompactPersonality.fields(sections.backstory).ID?.Name;
+  if (name) return name;
   const core = backstoryPart(sections.backstory, "Core Identity") || sections.backstory;
   const match = core.match(/\b([A-Z][a-zA-Z'-]{1,28})\b/);
   return match?.[1] || "";
 }
 
 function inferAgeFromSections(sections) {
+  const age = CompactPersonality.fields(sections.backstory).ID?.Age;
+  if (age) return age;
   const text = `${backstoryPart(sections.backstory, "Core Identity")} ${sections.avatar}`;
   const match = text.match(/\b(?:age|aged)?\s*(\d{2})\b/i);
   return match?.[1] || "";
 }
 
 function inferGenderFromSections(sections) {
+  const gender = CompactPersonality.fields(sections.backstory).ID?.Gender;
+  if (gender) return gender.toLowerCase();
   const text = `${backstoryPart(sections.backstory, "Core Identity")} ${sections.avatar}`.toLowerCase();
   if (/\bwoman|female\b/.test(text)) return "woman";
   if (/\bman|male\b/.test(text)) return "man";
@@ -4295,6 +4351,10 @@ function inferGenderFromSections(sections) {
 
 function generatedFieldBackfill(sections) {
   const personalityText = backstoryPart(sections.backstory, "Personality");
+  const stack = CompactPersonality.fields(sections.backstory);
+  const framework = Object.values(stack.Framework || {}).join("; ").replace(/\b(Lawful|Neutral|Chaotic|True)-(Good|Neutral|Evil)\b/gi, "$1 $2") || String(sections.backstory || "").match(/(?:^|\n)[ \t]*Personality Framework\s*:\s*([^\n]*)/i)?.[1] || "";
+  const typeText = `${framework} ${personalityText}`;
+  const enneagram = framework.match(/\b(?:Enneagram\s+)?([1-9])(w[1-9])\b/i) || framework.match(/\bEnneagram\s+([1-9])\b/i);
   const conflict = backstoryPart(sections.backstory, "Conflict");
   const coreIdentity = backstoryPart(sections.backstory, "Core Identity");
   const occupationDetails = inferOccupationDetailsFromText(`${coreIdentity} ${backstoryPart(sections.backstory, "Occupation")} ${backstoryPart(sections.backstory, "Secondary Work")} ${backstoryPart(sections.backstory, "Education")} ${sections.premise} ${sections.routine} ${sections.kms}`);
@@ -4312,9 +4372,9 @@ function generatedFieldBackfill(sections) {
     currentState: locationDetails.currentState,
     currentCountry: locationDetails.currentCountry,
     coreIdea: oneLine([coreIdentity, archetype, conflict].filter(Boolean).join(" "), 420),
-    occupation: occupationDetails.occupation,
-    secondaryOccupation: occupationDetails.secondaryOccupation,
-    education: occupationDetails.education,
+    occupation: stack.ID?.Role || occupationDetails.occupation,
+    secondaryOccupation: stack.ID?.SideWork || occupationDetails.secondaryOccupation,
+    education: stack.ID?.Edu || occupationDetails.education,
     personality: oneLine(personalityText || sections.behavior, 360),
     dynamic: oneLine(dynamic, 160),
     intimacy: oneLine(intimacy, 180),
@@ -4322,8 +4382,12 @@ function generatedFieldBackfill(sections) {
     appearanceNotes: oneLine(sections.physical || sections.avatar, 240),
     distinctiveFeatures: oneLine(sections.face, 160),
     appearanceLighting: /background|light|portrait/i.test(sections.portrait) ? oneLine(sections.portrait, 120) : "",
-    mbti: personalityText.match(/\b(?:INTJ|INFJ|ENTP|ENFP|ISTP|ISFJ|ESTJ|ESFP|INTP|INFP|ENTJ|ENFJ|ISTJ|ISFP|ESTP|ESFJ)\b/)?.[0] || "",
-    tritype: personalityText.match(/\b[1-9]{3}\b/)?.[0] || "",
+    mbti: typeText.match(/\b(?:INTJ|INFJ|ENTP|ENFP|ISTP|ISFJ|ESTJ|ESFP|INTP|INFP|ENTJ|ENFJ|ISTJ|ISFP|ESTP|ESFJ)\b/)?.[0] || "",
+    tritype: typeText.match(/\b[1-9]{3}\b/)?.[0] || "",
+    enneagramType: enneagram?.[1] || "",
+    enneagramWing: enneagram?.[2]?.toLowerCase() || "",
+    attachmentStyle: optionValueForText("attachmentStyle", framework.match(/\b(Fearful-Avoidant|Secure|Anxious|Avoidant)\b/i)?.[1] || ""),
+    moralAlignment: optionValueForText("moralAlignment", framework.match(/\b(?:Lawful Good|Neutral Good|Chaotic Good|Lawful Neutral|True Neutral|Chaotic Neutral|Lawful Evil|Neutral Evil|Chaotic Evil)\b/i)?.[0] || ""),
     boundaries: value("boundaries"),
     // These interview answers help fallback generation and future rerolls stay close to the edited character.
     why: oneLine(personalityText || conflict, 260),
@@ -4492,7 +4556,7 @@ function setOutputSections(text, options = {}) {
   const sections = fillMissingSections(parseOutputSections(text));
   Object.entries(outputSections).forEach(([key, id]) => {
     const lockKey = journalParentByKeyphrases[key] || key;
-    if (options.preserveLocked && isSectionLocked(lockKey) && $(id).value.trim()) return;
+    if (options.preserveLocked && isSectionLocked(lockKey)) return;
     $(id).value = normalizeSectionValue(key, sections[key]);
   });
   updateCounters();
@@ -4501,6 +4565,7 @@ function setOutputSections(text, options = {}) {
 
 function normalizeImportedSectionValue(sectionKey, text) {
   const max = sectionMeta[sectionKey]?.max;
+  if (sectionKey === "kms") return stripSectionLabel(text, sectionKey).trim();
   const cleaned = cleanGeneratedText(stripSectionLabel(text, sectionKey));
   if (sectionKey === "opening" || sectionKey === "example") return compact(cleanGreetingText(cleaned), max);
   if (sectionKey === "avatar") return compact(cleanAvatarDescription(cleaned), max);
@@ -4522,6 +4587,7 @@ function setImportedOutputSections(text) {
 }
 
 function resetKinImportCanvas() {
+  state.personalityConstruction = null;
   const preservedUserName = value("userName");
   clearApiError();
   generatorFieldIds.forEach((id) => {
@@ -4571,7 +4637,9 @@ function resetKinImportCanvas() {
 }
 
 function clearGeneratedOutput(options = {}) {
-  Object.values(outputSections).forEach((id) => {
+  if (!options.preserveLocked) state.personalityConstruction = null;
+  Object.entries(outputSections).forEach(([key, id]) => {
+    if (options.preserveLocked && isSectionLocked(journalParentByKeyphrases[key] || key)) return;
     if ($(id)) setValue(id, "");
   });
   Object.values(variantOutputs).forEach((id) => {
@@ -4875,7 +4943,7 @@ function buildKinBundleExport() {
   };
   packageJson.imageManifest = imageAssets.manifest;
   packageJson.restoreNotes = [
-    "This .kin file is a ZIP-compatible KinForge bundle. Phase 3 import will restore kinforge-package.json and files from images/.",
+    "This .kin file is a ZIP-compatible KinForge bundle. Use Load in KinForge to restore the character, journals, and images.",
     "The JSON stores image paths in imageManifest instead of embedding large base64 image data.",
     ...(packageJson.restoreNotes || []),
   ];
@@ -4961,6 +5029,7 @@ function loadSettingsData(data, fileName = "") {
   const hasJournalData = Boolean(data?.journalManager || data?.settings?.journalManager || data?.state?.journals || data?.journals);
   const isKinForgeSettings = data && typeof data === "object" && (data.app === "KinForge Kindroid Generator" || data.packageType === "KinForge Full Package" || data.generatedSections || data.settings?.fields || hasJournalData);
   if (!isKinForgeSettings) return false;
+  state.personalityConstruction = data.personalityConstruction || null;
   const fields = data.settings?.fields || {};
   Object.entries(fields).forEach(([id, fieldData]) => {
     if (!$(id)) return;
@@ -5000,8 +5069,9 @@ function loadSettingsData(data, fileName = "") {
   }
   const loadedImageStudio = data.imageStudio?.generatedImage?.image ? data.imageStudio : (data.settings?.imageStudio || data.imageStudio || {});
   restoreImageStudioSettings(loadedImageStudio);
-  if (data.generatedSections) {
-    Object.entries(outputSections).forEach(([key, id]) => setValue(id, normalizeSectionValue(key, data.generatedSections[key] || "")));
+  if (data.generatedSections || data.generatedSectionsV2) {
+    const sections = v2SectionsToOutputSections(data.generatedSectionsV2, data.generatedSections || {});
+    Object.entries(outputSections).forEach(([key, id]) => setValue(id, sections[key] || ""));
   }
   setSectionLocks(data.lockedOutputSections || {});
   Object.entries(data.sceneVariants || {}).forEach(([key, text]) => {
@@ -5046,7 +5116,28 @@ function loadSettingsData(data, fileName = "") {
   return true;
 }
 
+async function loadKinBundle(file) {
+  if (state.generationBusy || state.imageStudioBusy) {
+    $("statusPill").textContent = "Wait for generation to finish before loading a Kin.";
+    return;
+  }
+  try {
+    if (file.size > KinBundle.MAX_BYTES) throw new Error("Kin package exceeds the 100 MB limit.");
+    $("statusPill").textContent = "Reading Kin package...";
+    const data = KinBundle.read(new Uint8Array(await file.arrayBuffer()));
+    // Finish decoding and validating the archive before replacing the current character.
+    resetKinImportCanvas();
+    loadSettingsData(data, file.name);
+    setOutputCollapsed(false);
+    $("statusPill").textContent = `Loaded Kin package with ${state.journals?.length || 0} journals and ${Object.keys(data.imageManifest || data.bundle.images || {}).length} images`;
+  } catch (error) {
+    showApiError(error, "Load Kin Package");
+    $("statusPill").textContent = `Kin package load failed: ${error.message}`;
+  }
+}
+
 function loadTextFile(file) {
+  if (/\.kin$/i.test(file.name)) return loadKinBundle(file);
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const text = String(reader.result || "");
@@ -5069,7 +5160,7 @@ function loadTextFile(file) {
     const profileText = journalMarkerIndex >= 0 ? text.slice(0, journalMarkerIndex).trim() : text;
     const journalText = journalMarkerIndex >= 0 ? text.slice(journalMarkerIndex) : "";
     const rawJournalOnlyEntries = journalMarkerIndex < 0 ? parseJournalExportEntries(text) : [];
-    if (rawJournalOnlyEntries.length && !profileText.match(/\bBackstory\b|\bResponse Directive\b|\bAvatar Description\b/i)) {
+    if (rawJournalOnlyEntries.length && !profileText.match(/\bPersonality\b|\bResponse Directive\b|\bAvatar Description\b/i)) {
       state.journals = rawJournalOnlyEntries;
       state.journalCategories = ["Overview", "People", "Places", "Objects", "Events", "Relationships", "World", "Behavior", "Temporary", "Imported"];
       state.journalCategory = "Imported";
@@ -5142,6 +5233,7 @@ function buildSettingsExport() {
   ]));
   return {
     app: "KinForge Kindroid Generator",
+    schemaVersion: 2,
     version: document.querySelector(".version-badge")?.textContent.trim() || "",
     exportedAt: new Date().toISOString(),
     mode: state.mode,
@@ -5177,6 +5269,8 @@ function buildSettingsExport() {
     aiPayloadForFreshGeneration: buildGeneratorPayload({ includeContinuity: false }),
     aiPayloadWithContinuity: buildGeneratorPayload(),
     generatedSections: getSectionValues(),
+    generatedSectionsV2: getSectionValuesV2(),
+    personalityConstruction: state.personalityConstruction || null,
     imageStudio: buildImageStudioSettings(),
     journalManager: buildJournalSettingsExport(),
     consistencyReport: state.consistencyReport || null,
@@ -5197,7 +5291,7 @@ function buildPackageExport(options = {}) {
     },
     imageStudio,
     packageType: "KinForge Full Package",
-    packageVersion: 1,
+    packageVersion: 2,
     exports: {
       profileText: getCombinedOutput(),
       fullTextWithJournals: buildFullTextSave(),
@@ -5277,7 +5371,7 @@ function buildLocalGreetingReport() {
   if (example.trim() && !/#Length\s*:/i.test(example)) add("low", "Example missing length rule", "Example Message does not include #Length.", "Add a reply range such as 1-3 paragraphs, 350-900 characters, medium sentences.");
   if (example.trim() && !/#Rules\s*:/i.test(example)) add("low", "Example missing behavior rules", "Example Message does not include #Rules.", "Add compact behavioral rules that control escalation, consent, trust, and what the Kin prioritizes.");
   if (example.length > sectionMeta.example.max) add("high", "Example over character limit", `${example.length}/${sectionMeta.example.max} characters.`, "Trim the voice seed and sample before copying it into Kindroid.");
-  if (!greeting.trim()) add("high", "Missing greeting", "Opening Greeting is blank.", "Generate or rewrite the opening greeting.");
+  if (!greeting.trim()) add("high", "Missing scene setting", "Scene Setting is blank.", "Generate or rewrite the scene setting.");
   if (greeting.length > sectionMeta.opening.max) add("high", "Over character limit", `${greeting.length}/${sectionMeta.opening.max} characters.`, "Trim the greeting before copying it into Kindroid.");
   if (userName !== "{username}" && /\buser\s*name\b|\busername\b|\buser\b/i.test(greeting)) add("medium", "Username placeholder leak", "The greeting appears to use User, Username, or User Name.", `Replace with ${userName} only when the Kin would know the name.`);
   if (/you understand|trust you|waiting for someone like you|we can figure this out together/i.test(greeting)) add("medium", "Assumed intimacy", "The dialogue assumes trust, emotional familiarity, or teamwork.", "Reduce the line to a concrete observation, question, or practical request.");
@@ -5340,16 +5434,36 @@ function setGreetingIssueDecision(index, decision) {
 function outputSectionText(sectionKey) {
   const id = outputSections[sectionKey];
   if (!id || !$(id)) return "";
-  const raw = $(id).value.trim();
-  const cleaned = normalizeSectionValue(sectionKey, raw);
-  if (cleaned !== raw) {
-    $(id).value = cleaned;
-  }
-  return cleaned;
+  return $(id).value;
 }
 
 function getSectionValues() {
   return Object.fromEntries(Object.keys(outputSections).map((key) => [key, outputSectionText(key)]));
+}
+
+function v2SectionsToOutputSections(v2 = {}, fallback = {}) {
+  return {
+    ...fallback,
+    backstory: v2.personality ?? fallback.backstory ?? "",
+    kms: v2.keyMemories ?? fallback.kms ?? "",
+    rd: v2.responseDirective ?? fallback.rd ?? "",
+    example: v2.exampleMessage ?? fallback.example ?? "",
+    opening: v2.sceneSetting ?? fallback.opening ?? "",
+    relationship: v2.relationshipContext ?? fallback.relationship ?? "",
+    player: v2.userPersona ?? fallback.player ?? "",
+  };
+}
+
+function getSectionValuesV2() {
+  return {
+    personality: outputSectionText("backstory"),
+    keyMemories: outputSectionText("kms"),
+    responseDirective: outputSectionText("rd"),
+    exampleMessage: outputSectionText("example"),
+    sceneSetting: outputSectionText("opening"),
+    relationshipContext: outputSectionText("relationship"),
+    userPersona: outputSectionText("player"),
+  };
 }
 
 function formatSectionForCopy(sectionKey) {
@@ -5454,8 +5568,8 @@ function renderCharacterSheet() {
   const fullBodyImage = state.fullBodyReferenceImage?.image || "";
   host.innerHTML = `
     <div class="character-sheet-left">
-      ${renderCharacterSheetTextCard("Greeting Message", "opening")}
-      ${renderCharacterSheetTextCard("Backstory", "backstory")}
+      ${renderCharacterSheetTextCard("Scene Setting", "opening")}
+      ${renderCharacterSheetTextCard("Personality", "backstory")}
       ${renderCharacterSheetMemories()}
       ${renderCharacterSheetTextCard("Example Message", "example")}
     </div>
@@ -5466,7 +5580,7 @@ function renderCharacterSheet() {
       </div>
       ${renderCharacterSheetQuickInfo()}
       ${renderCharacterSheetTextCard("Response Directive", "rd", { muted: true })}
-      ${renderCharacterSheetTextCard("Player Relationship", "relationship", { muted: true })}
+      ${renderCharacterSheetTextCard("Relationship Context", "relationship", { muted: true })}
     </div>
   `;
 }
@@ -5512,11 +5626,11 @@ const defaultKindroidIncludeFields = {
 const kindroidPayloadLabels = {
   ai_name: "Name",
   ai_gender: "Gender",
-  ai_backstory: "Backstory",
+  ai_backstory: "Personality",
   ai_memory: "Key Memories",
   ai_directive: "Response Directive",
   ai_example_message: "Example Message",
-  current_scene: "Current Scene",
+  current_scene: "Scene Setting",
   user_name: "User Name",
   user_gender: "User Gender",
   ai_additional_context: "Additional Context",
@@ -5825,7 +5939,7 @@ function buildKindroidPushPayload() {
   const contextParts = [
     value(outputSections.tagline) ? `Tagline: ${value(outputSections.tagline)}` : "",
     value(outputSections.keywords) ? `Keywords: ${value(outputSections.keywords)}` : "",
-    value(outputSections.relationship) ? `Player Relationship: ${value(outputSections.relationship)}` : "",
+    value(outputSections.relationship) ? `Relationship Context: ${value(outputSections.relationship)}` : "",
     value(outputSections.premise) ? `Story Premise: ${value(outputSections.premise)}` : "",
   ].filter(Boolean).join("\n");
   const candidates = {
@@ -5936,7 +6050,7 @@ function parseKindroidAdditionalContext(text = "") {
   [
     ["tagline", outputSections.tagline, "Tagline"],
     ["keywords", outputSections.keywords, "Keywords"],
-    ["relationship", outputSections.relationship, "Player Relationship"],
+    ["relationship", outputSections.relationship, "Relationship Context"],
     ["premise", outputSections.premise, "Story Premise"],
   ].forEach(([key, id, label], index, entries) => {
     const nextLabels = entries.slice(index + 1).map(([, , nextLabel]) => nextLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
@@ -5964,7 +6078,7 @@ function applyKindroidPayloadToKinForge(payload = {}, options = {}) {
   Object.entries(outputMap).forEach(([apiKey, sectionId]) => {
     const text = String(payload[apiKey] || "").trim();
     if (!text) return;
-    setValue(sectionId, normalizeSectionValue(Object.entries(outputSections).find(([, id]) => id === sectionId)?.[0] || "", text));
+    setValue(sectionId, text);
     outputCount += 1;
   });
   const context = parseKindroidAdditionalContext(payload.ai_additional_context || "");
@@ -6525,7 +6639,7 @@ function buildKindroidChatBreakPayload() {
   setValue("kindroidChatBreakGreeting", greeting);
   $("kindroidApiStatus").textContent = greeting
     ? `Chat break preview built (${greeting.length}/${sectionMeta.opening.max} characters).`
-    : "Opening Greeting is empty. Generate or write one first.";
+    : "Scene Setting is empty. Generate or write one first.";
   return payload;
 }
 
@@ -6548,7 +6662,7 @@ async function sendKindroidChatBreak(options = {}) {
     return null;
   }
   if (!payload.greeting) {
-    $("kindroidApiStatus").textContent = "Opening Greeting is empty. Generate or write one first.";
+    $("kindroidApiStatus").textContent = "Scene Setting is empty. Generate or write one first.";
     return null;
   }
   const button = options.button || $("kindroidChatBreakButton");
@@ -6810,14 +6924,14 @@ function buildOpeningGreeting(p) {
   if (isWorldKin(p)) {
     const place = p.currentLocation || p.world?.places || "the starting location";
     return compact(
-      `Opening Greeting\n*${place} opens around ${p.userName} with ordinary noise first: footsteps, work, weather, and people already mid-routine. No one explains the whole world at once.*\n\n*The scene offers three reachable points of contact: someone busy, somewhere useful, and one small problem with visible consequences.*\n\n*"Choose where you go first, and the world will answer through whoever you approach."*`,
+      `Scene Setting\n*${place} opens around ${p.userName} with ordinary noise first: footsteps, work, weather, and people already mid-routine. No one explains the whole world at once.*\n\n*The scene offers three reachable points of contact: someone busy, somewhere useful, and one small problem with visible consequences.*\n\n*"Choose where you go first, and the world will answer through whoever you approach."*`,
       sectionMeta.opening.max,
     );
   }
   if (isMultiCharacterKin(p)) {
     const members = p.ensembleMembers || `${p.name}'s small circle`;
     return compact(
-      `Opening Greeting\n*${members} are already in motion when ${p.userName} arrives. One person handles the practical problem, another notices the interruption, and a third, if present, makes the silence louder.*\n\n*Speaker labels stay clear so no voice blends into another.*\n\n*${p.name}: "Good timing. We need one outside opinion before this turns into three different bad plans. What did you walk in on from your side?"*`,
+      `Scene Setting\n*${members} are already in motion when ${p.userName} arrives. One person handles the practical problem, another notices the interruption, and a third, if present, makes the silence louder.*\n\n*Speaker labels stay clear so no voice blends into another.*\n\n*${p.name}: "Good timing. We need one outside opinion before this turns into three different bad plans. What did you walk in on from your side?"*`,
       sectionMeta.opening.max,
     );
   }
@@ -6852,7 +6966,7 @@ function buildOpeningGreeting(p) {
     ? voluntaryStay ? "Sorry, quick question. You look like you know where people actually eat around here." : vehicleCompetent ? "Sorry, quick question. I am trying to get my bearings." : "Sorry, quick question."
     : voluntaryStay ? "I was going to leave this morning. Then I made a list instead." : vehicleCompetent ? "I am road-ready. That is not the same as wanting to go." : "Tell me you caught that too.";
   return compact(
-    `Opening Greeting\n*${firstAction}*\n\n*"${address}," ${p.name} says, glancing from the errand back to the street. "${initialLine}"*\n\n*They leave a little space in the conversation, careful not to turn a first meeting into a confession.*\n\n*"${finalQuestion}"*`,
+    `Scene Setting\n*${firstAction}*\n\n*"${address}," ${p.name} says, glancing from the errand back to the street. "${initialLine}"*\n\n*They leave a little space in the conversation, careful not to turn a first meeting into a confession.*\n\n*"${finalQuestion}"*`,
     sectionMeta.opening.max,
   );
 }
@@ -6889,20 +7003,20 @@ function buildFallbackSceneVariants() {
 function buildPlayerRelationship(p) {
   if (isWorldKin(p)) {
     return compact(
-      `Player Relationship\n${p.userName} is the protagonist, visitor, resident, investigator, traveler, or other active role inside the setting. The player replies by choosing actions, questions, directions, and which NPCs deserve Journal Manager entries.`,
+      `Relationship Context\n${p.userName} is the protagonist, visitor, resident, investigator, traveler, or other active role inside the setting. The player replies by choosing actions, questions, directions, and which NPCs deserve Journal Manager entries.`,
       350,
     );
   }
   if (isMultiCharacterKin(p)) {
     return compact(
-      `Player Relationship\n${p.userName} relates to each member separately. Replies should make clear who is being addressed, which relationship is changing, and whether the scene includes the whole group or only one person.`,
+      `Relationship Context\n${p.userName} relates to each member separately. Replies should make clear who is being addressed, which relationship is changing, and whether the scene includes the whole group or only one person.`,
       350,
     );
   }
   const relation = relationshipConstraint(p);
   const heat = p.dramaHeat === "Low" ? "low-pressure" : p.dramaHeat === "High" ? "urgent" : p.dramaHeat === "Volatile but coherent" ? "volatile" : "charged";
   return compact(
-    `Player Relationship\n${relation.playerAngle} The opening gives the player a ${heat}, practical reason to respond. ${relation.summary}`,
+    `Relationship Context\n${relation.playerAngle} The scene setting gives the player a ${heat}, practical reason to respond. ${relation.summary}`,
     350,
   );
 }
@@ -6913,7 +7027,7 @@ function buildPlayerProfile(p) {
   const ethnicity = player.ethnicity === "Infer" ? "" : `${player.ethnicity}, `;
   const notes = player.notes ? ` ${sentence(player.notes, "")}` : "";
   const angle = `Designed to contrast and connect with ${p.name}: steady where the Kin is guarded, curious where the Kin hides, and present enough to matter.`;
-  return compact(`Player Profile\n${player.name}, ${player.age}, ${ethnicity}${gender}. ${angle}${notes}`, 450);
+  return compact(`User Persona\n${player.name}, ${player.age}, ${ethnicity}${gender}. ${angle}${notes}`, 450);
 }
 
 function identityForGalleryPrompt(p) {
@@ -7370,6 +7484,55 @@ function addLockControls() {
   });
 }
 
+function updateFieldCharacterCount(field) {
+  if (!field?.matches?.("input[maxlength], textarea[maxlength]") || field.maxLength < 0 || !field.id) return;
+  if (["hidden", "password"].includes(field.type)) return;
+  let counter = document.getElementById(field.dataset.characterCounter || "");
+  if (!counter) {
+    const known = { coreIdea: "coreIdeaCount", journalBody: "journalBodyCount" };
+    const section = field.closest(".output-section");
+    counter = document.getElementById(known[field.id] || "")
+      || (section?.querySelector("textarea") === field ? section.querySelector(".section-title .section-count") : null);
+    if (!counter) {
+      counter = document.createElement("span");
+      counter.id = `${field.id}-character-count`;
+      counter.className = "section-count field-character-count";
+      field.insertAdjacentElement("afterend", counter);
+    }
+    field.dataset.characterCounter = counter.id;
+    const describedBy = new Set((field.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean));
+    describedBy.add(counter.id);
+    field.setAttribute("aria-describedby", [...describedBy].join(" "));
+  }
+  const count = field.value.length;
+  const text = `${count} / ${field.maxLength} characters`;
+  if (counter.textContent !== text) counter.textContent = text;
+  counter.classList.toggle("over", count > field.maxLength);
+  counter.classList.toggle("at-limit", count === field.maxLength);
+  if (counter.classList.contains("field-character-count")) counter.hidden = field.hidden;
+}
+
+function updateAllFieldCharacterCounts() {
+  document.querySelectorAll("input[maxlength], textarea[maxlength]").forEach(updateFieldCharacterCount);
+}
+
+function setupFieldCharacterCounts() {
+  document.addEventListener("input", (event) => updateFieldCharacterCount(event.target));
+  document.addEventListener("change", (event) => updateFieldCharacterCount(event.target));
+  // Model controls are recreated dynamically; attach counters to their new inputs too.
+  new MutationObserver((records) => {
+    for (const record of records) {
+      if (record.type === "attributes") updateFieldCharacterCount(record.target);
+      else record.addedNodes.forEach((node) => {
+        if (node.nodeType !== 1) return;
+        updateFieldCharacterCount(node);
+        node.querySelectorAll("input[maxlength], textarea[maxlength]").forEach(updateFieldCharacterCount);
+      });
+    }
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["maxlength", "hidden"] });
+  updateAllFieldCharacterCounts();
+}
+
 function updateCounters() {
   setMeter("coreIdeaCount", $("coreIdea").value.length, 1000);
   setMeter("taglineCount", $("taglineOutput").value.length, sectionMeta.tagline.max);
@@ -7400,6 +7563,7 @@ function updateCounters() {
   if ($("imageStudioPromptCount")) $("imageStudioPromptCount").textContent = `${value("imageStudioFinalPromptOutput").length} characters`;
   updateStudioSnapshot();
   renderOutputSectionNavigator();
+  updateAllFieldCharacterCounts();
 }
 
 function imageStudioModelLabel() {
@@ -8287,17 +8451,21 @@ function draftSafeState() {
     faceReferenceImage: imageStudioImageMetadata(state.faceReferenceImage),
     fullBodyReferenceImage: imageStudioImageMetadata(state.fullBodyReferenceImage),
     imageStudioBusy: false,
+    generationBusy: false,
   };
 }
 
 function saveDraft() {
+  if (state.generationBusy) return;
   updateEstimatedBirthYear();
   const savedFieldIds = ["userName", "createPlayerProfile", ...generatorFieldIds].filter((id, index, ids) => ids.indexOf(id) === index && $(id));
   const data = {
+    schemaVersion: 2,
     state: draftSafeState(),
     fields: Object.fromEntries(savedFieldIds.map((id) => [id, $(id).value])),
     createPlayerProfile: $("createPlayerProfile").checked,
     sections: Object.fromEntries(Object.entries(outputSections).map(([key, id]) => [key, $(id).value])),
+    sectionsV2: getSectionValuesV2(),
     variants: Object.fromEntries(Object.entries(variantOutputs).map(([key, id]) => [key, $(id).value])),
     greetingStudio: {
       brief: value("greetingStudioBrief"),
@@ -8331,8 +8499,9 @@ function loadDraft() {
     state.fieldMeta ||= {};
     Object.entries(data.fields || {}).forEach(([id, fieldValue]) => setValue(id, fieldValue));
     $("createPlayerProfile").checked = data.createPlayerProfile !== false;
-    if (data.sections) {
-      Object.entries(outputSections).forEach(([key, id]) => setValue(id, normalizeSectionValue(key, data.sections[key] || "")));
+    if (data.sections || data.sectionsV2) {
+      const sections = v2SectionsToOutputSections(data.sectionsV2, data.sections || {});
+      Object.entries(outputSections).forEach(([key, id]) => setValue(id, sections[key] || ""));
     } else {
       setOutputSections(data.output || "");
     }
@@ -8435,8 +8604,30 @@ $("skipQuestionButton").addEventListener("click", () => {
 
 $("generatorForm").addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (state.generationBusy) return;
+  const previousSections = getSectionValues();
+  const previousImages = { imageStudioImage: state.imageStudioImage, faceReferenceImage: state.faceReferenceImage, fullBodyReferenceImage: state.fullBodyReferenceImage, personalityConstruction: state.personalityConstruction };
+  const previousTitle = $("outputTitle").textContent;
+  const previousVariants = Object.fromEntries(Object.entries(variantOutputs).map(([key, id]) => [key, $(id).value]));
+  const previousPrompt = value("imageStudioFinalPromptOutput");
+  const restorePreviousOutput = () => {
+    Object.entries(outputSections).forEach(([key, id]) => setValue(id, previousSections[key]));
+    Object.entries(variantOutputs).forEach(([key, id]) => setValue(id, previousVariants[key]));
+    setValue("imageStudioFinalPromptOutput", previousPrompt);
+    Object.assign(state, previousImages);
+    renderImagePreview();
+    $("outputTitle").textContent = previousTitle;
+    updateCounters();
+    failGenerationProgress("Generation failed; previous output restored");
+    $("statusPill").textContent = "Generation failed; previous output restored";
+  };
+  const payload = buildGeneratorPayload({ includeContinuity: false });
+  payload.lockedSections = getLockedSections();
+  payload.existingSections = Object.fromEntries(Object.entries(previousSections).filter(([key]) => isSectionLocked(journalParentByKeyphrases[key] || key)));
+  let usedFallback = false;
+  state.generationBusy = true;
   clearApiError();
-  clearGeneratedOutput({ title: "Generating fresh Kin...", save: false });
+  clearGeneratedOutput({ title: "Generating fresh Kin...", save: false, preserveLocked: true, clearGreetingStudio: false });
   setOutputCollapsed(false);
   setWorkspaceTab("output", "main");
   startGenerationProgress();
@@ -8448,42 +8639,76 @@ $("generatorForm").addEventListener("submit", async (event) => {
   }
 
   let output;
+  let generationDetails;
   try {
-    const aiResult = await generateKindroidWithAi();
+    const aiResult = await generateKindroidWithAi(payload);
+    generationDetails = aiResult;
     output = aiResult.output;
     $("statusPill").textContent = `AI generated: ${aiResult.model}`;
   } catch (error) {
     console.warn(error);
     showApiError(error, "Generate Kindroid");
-    output = generateKindroid();
-    $("statusPill").textContent = `Fallback: ${error.message.slice(0, 46)}`;
+    if (error.message === "Missing OPENAI_API_KEY") {
+      output = generateKindroid();
+      usedFallback = true;
+    } else {
+      restorePreviousOutput();
+      state.generationBusy = false;
+      return;
+    }
   }
 
-  setGenerationProgress(5);
-  $("outputTitle").textContent = `${inferName(value("coreIdea"))} is ready`;
-  const generatedSections = setOutputSections(output);
-  applyGeneratedValuesToForm(generatedSections);
-  const generatedJournalCount = importGeneratedJournals();
-  finishGenerationProgress("Generation complete");
-  if (state.autoInferJournals) {
-    $("statusPill").textContent = "Inferring journal drafts...";
-    try {
-      const result = await inferJournalsWithAi("profile");
-      const count = stageInferredJournalDrafts(result.entries, "Auto inferred");
-      setWorkspaceTab("output", count ? "journals" : "main");
-      $("statusPill").textContent = `Fresh AI generated; ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"}, ${count} draft${count === 1 ? "" : "s"} ready`;
-    } catch (error) {
-      console.warn(error);
-      showApiError(error, "Auto Infer Journals");
-      setWorkspaceTab("output", "main");
-      $("statusPill").textContent = `Generated ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"}; inference failed`;
+  try {
+    setGenerationProgress(5);
+    setValue("greetingDraftOutput", "");
+    state.greetingReview = { issues: [], decisions: {} };
+    $("greetingStudioReport")?.classList.add("hidden");
+    $("greetingDraftPanel")?.classList.add("hidden");
+    $("outputTitle").textContent = `${inferName(value("coreIdea"))} is ready`;
+    setOutputSections(output, { preserveLocked: true });
+    if (!isSectionLocked("backstory") && generationDetails) state.personalityConstruction = generationDetails.personalityConstruction || null;
+    const generatedSections = getSectionValues();
+    applyGeneratedValuesToForm(generatedSections);
+    const generatedJournalCount = importGeneratedJournals();
+    if (generationDetails?.journalEntries?.length) {
+      const additions = generationDetails.journalEntries.map(entry => {
+        let title = entry.title;
+        let suffix = 2;
+        while ((state.journals || []).some(existing => existing.title.toLowerCase() === title.toLowerCase() && existing.body !== entry.body)) title = `${entry.title} ${suffix++}`;
+        return { ...entry, title, category: entry.category || "World" };
+      });
+      const capacity = Math.max(0, journalConfig.maxEntries - (state.journals || []).length);
+      upsertNormalizedJournalEntries(additions.slice(0, capacity));
+      if (additions.length > capacity) stageInferredJournalDrafts(additions.slice(capacity), "Personality context");
     }
-  } else {
-    setWorkspaceTab("output", generatedJournalCount ? "journals" : "main");
-    $("statusPill").textContent = `Fresh AI generated; ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"} added`;
+    finishGenerationProgress("Generation complete");
+    if (state.autoInferJournals) {
+      $("statusPill").textContent = "Inferring journal drafts...";
+      try {
+        const result = await inferJournalsWithAi("profile");
+        const count = stageInferredJournalDrafts(result.entries, "Auto inferred");
+        setWorkspaceTab("output", count ? "journals" : "main");
+        $("statusPill").textContent = `Fresh AI generated; ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"}, ${count} draft${count === 1 ? "" : "s"} ready`;
+      } catch (error) {
+        console.warn(error);
+        showApiError(error, "Auto Infer Journals");
+        setWorkspaceTab("output", "main");
+        $("statusPill").textContent = `Generated ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"}; inference failed`;
+      }
+    } else {
+      setWorkspaceTab("output", generatedJournalCount ? "journals" : "main");
+      $("statusPill").textContent = `Fresh AI generated; ${generatedJournalCount} manager journal${generatedJournalCount === 1 ? "" : "s"} added`;
+    }
+    setControlsCollapsed(true);
+    if (usedFallback) $("statusPill").textContent = "Offline template generated; OpenAI API key is not configured";
+    state.generationBusy = false;
+    saveDraft();
+  } catch (error) {
+    restorePreviousOutput();
+    showApiError(error, "Apply Generated Kindroid");
+  } finally {
+    state.generationBusy = false;
   }
-  setControlsCollapsed(true);
-  saveDraft();
 });
 
 $("randomSeedButton").addEventListener("click", async () => {
@@ -8996,7 +9221,7 @@ $("closeVariantsButton").addEventListener("click", () => {
 
 $("rewriteGreetingButton").addEventListener("click", async () => {
   if (isSectionLocked("opening")) {
-    $("statusPill").textContent = "Opening Greeting is locked";
+    $("statusPill").textContent = "Scene Setting is locked";
     return;
   }
   $("statusPill").textContent = "Rewriting greeting...";
@@ -9009,7 +9234,7 @@ $("rewriteGreetingButton").addEventListener("click", async () => {
     $("statusPill").textContent = `Greeting draft ready: ${result.model}`;
   } catch (error) {
     console.warn(error);
-    showApiError(error, "Greeting Studio Rewrite");
+    showApiError(error, "Scene Studio Rewrite");
     const fallback = buildOpeningVariant(buildProfile(), value("greetingStudioStyle").toLowerCase().includes("conflict") ? "conflict" : "quiet");
     setValue("greetingDraftOutput", cleanGreetingText(stripSectionLabel(fallback, "opening")));
     $("greetingDraftPanel").classList.remove("hidden");
@@ -9021,7 +9246,7 @@ $("rewriteGreetingButton").addEventListener("click", async () => {
 
 $("applyGreetingDraftButton").addEventListener("click", () => {
   if (isSectionLocked("opening")) {
-    $("statusPill").textContent = "Opening Greeting is locked";
+    $("statusPill").textContent = "Scene Setting is locked";
     return;
   }
   const draft = value("greetingDraftOutput");
@@ -9042,7 +9267,7 @@ $("checkGreetingButton").addEventListener("click", async () => {
     $("statusPill").textContent = `Greeting checked: ${result.model}`;
   } catch (error) {
     console.warn(error);
-    showApiError(error, "Greeting Studio Check");
+    showApiError(error, "Scene Studio Check");
     state.greetingReview = { issues: [], decisions: {} };
     renderGreetingReport(buildLocalGreetingReport());
     $("statusPill").textContent = `Local greeting check: ${error.message.slice(0, 32)}`;
@@ -9059,7 +9284,7 @@ $("greetingStudioReport").addEventListener("click", (event) => {
 document.querySelectorAll(".apply-variant").forEach((button) => {
   button.addEventListener("click", () => {
     if (isSectionLocked("opening")) {
-      $("statusPill").textContent = "Opening Greeting is locked";
+      $("statusPill").textContent = "Scene Setting is locked";
       return;
     }
     const text = $(variantOutputs[button.dataset.variant]).value.trim();
@@ -9072,6 +9297,7 @@ document.querySelectorAll(".apply-variant").forEach((button) => {
 });
 
 $("clearButton").addEventListener("click", () => {
+  state.personalityConstruction = null;
   normalizeKindroidApiState();
   const preservedKindroidApi = JSON.parse(JSON.stringify(state.kindroidApi));
   localStorage.removeItem("kinforge-kindroid-draft");
@@ -9359,11 +9585,15 @@ document.querySelectorAll(".reroll-section").forEach((button) => {
       } else {
         setValue(outputSections[sectionKey], normalizeSectionValue(sectionKey, result.section));
       }
+      if (sectionKey === "backstory") {
+        state.personalityConstruction = result.personalityConstruction || null;
+        applyGeneratedValuesToForm(getSectionValues());
+      }
       $("statusPill").textContent = `Rerolled ${label}: ${result.model}`;
     } catch (error) {
       console.warn(error);
       showApiError(error, `Reroll ${label}`);
-      const fallback = fallbackRerollSection(sectionKey);
+      const fallback = error.message === "Missing OPENAI_API_KEY" ? fallbackRerollSection(sectionKey) : "";
       if (fallback) {
         setValue(outputSections[sectionKey], cleanGeneratedText(fallback));
         const keyphrasesKey = journalPairs[sectionKey];
@@ -9406,3 +9636,4 @@ updateCounters();
 renderNameForge();
 renderJournalManager();
 renderAppearanceReference();
+setupFieldCharacterCounts();
